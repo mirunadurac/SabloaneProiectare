@@ -1,4 +1,5 @@
 ﻿using System;
+using LibraryManagement.Models;
 
 namespace LibraryManagement
 {
@@ -6,7 +7,8 @@ namespace LibraryManagement
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var book = new Book(1, "Gone with the wind", "Margaret Mitchell's", new DateTime(1936, 6, 30));
+            Console.WriteLine(book);
         }
     }
 }
