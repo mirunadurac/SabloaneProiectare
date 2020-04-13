@@ -12,7 +12,7 @@ namespace LibraryManagement.FactoryMethod
             return EBookType.NonFiction;
         }
 
-        public NonFiction(int id,string title, string author, DateTime publicationDate) :
+        public NonFiction(int id,string title, string author, int publicationDate) :
            base(id,title, author, publicationDate)
         {
 

@@ -8,8 +8,14 @@ namespace LibraryManagement.Proxy.Models
     {
 
         public DateTime EndDateValidity { get; set; }
-        public int NumberOfBorrowedBooks { get; set; }
-        public bool IsValid { get; set; }
+        public int NumberOfBorrowedBooks { get; set; } = 0;
+        public bool IsValid { get; set; } = true;
+
+        public LibraryMembership(DateTime dateTime)
+        {
+            EndDateValidity = dateTime;
+        }
+
         public void CancelSubscription()
         {
             IsValid = false;

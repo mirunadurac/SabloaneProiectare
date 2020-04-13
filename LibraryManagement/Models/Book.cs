@@ -10,11 +10,11 @@ namespace LibraryManagement.Models
         public int Id { get; set; }
         public string Title { get; set; }
         public string Author { get; set; }
-        public DateTime PublicationDate { get; set; }
+        public int PublicationDate { get; set; }
 
         public EBookType EBookType { get; set; }
 
-        public Book(int id, string title, string author, DateTime publicationdDate)
+        public Book(int id, string title, string author, int publicationdDate)
         {
             Id = id;
             Title = title;
@@ -22,7 +22,7 @@ namespace LibraryManagement.Models
             PublicationDate = publicationdDate;
         }
 
-        public Book(string title, string author, DateTime publicationdDate)
+        public Book(string title, string author, int publicationdDate)
         {
             Title = title;
             Author = author;

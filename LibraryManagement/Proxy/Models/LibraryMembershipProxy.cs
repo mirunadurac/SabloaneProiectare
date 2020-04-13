@@ -8,9 +8,9 @@ namespace LibraryManagement.Proxy.Models
     {
         private ILibraryMembership RealSubject;
 
-        public LibraryMembershipProxy()
+        public LibraryMembershipProxy(DateTime dateTime)
         {
-            RealSubject = new LibraryMembership();
+            RealSubject = new LibraryMembership(dateTime);
         }
 
         public void CancelSubscription()

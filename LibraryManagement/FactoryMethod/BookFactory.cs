@@ -8,6 +8,6 @@ namespace LibraryManagement.FactoryMethod
     public abstract class BookFactory
     {
         protected static int LastId { get; set; }
-        public abstract Book GetBook(string title, string author, DateTime publicationDate);
+        public abstract Book GetBook(string title, string author, int publicationDate);
     }
 }

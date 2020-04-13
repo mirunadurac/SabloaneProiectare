@@ -7,7 +7,7 @@ namespace LibraryManagement.FactoryMethod
 {
     public class FictionFactory:BookFactory
     {
-        public override Book GetBook(string title, string author, DateTime publicationDate)
+        public override Book GetBook(string title, string author, int publicationDate)
         {
             BookFactory.LastId++;
             return new Fiction(BookFactory.LastId,title, author, publicationDate);
