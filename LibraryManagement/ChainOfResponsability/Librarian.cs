@@ -1,4 +1,5 @@
 ﻿using LibraryManagement.Models;
+using LibraryManagement.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,8 +8,8 @@ namespace LibraryManagement.ChainOfResponsability
 {
      class Librarian:User
     {
-        public Librarian(string firstName, string lastName, DateTime dateTime, User supervisor):
-            base(firstName,lastName,dateTime, supervisor)
+        public Librarian(string firstName, string lastName, DateTime dateTime, User supervisor,Gender gender):
+            base(firstName,lastName,dateTime, supervisor, gender)
         {
 
         }

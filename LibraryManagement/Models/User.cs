@@ -3,21 +3,25 @@ using LibraryManagement.Proxy.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using LibraryManagement.Utils;
 
 namespace LibraryManagement.Models
 {
-     class User
+     public class User
     {
         protected static int Id { get; set; } = 0;
         public int IdUser { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public Gender Gender { get; set; }
         public List<KeyValuePair<DateTime,Book>> BorrowedBooks { get; set; }
         public LibraryMembership LibraryMembership { get; set; }
 
         User Supervisor { get; set; }
 
-        public User(string firstName, string lastName, DateTime dateTime, User supervisor)
+        public User(string firstName, string lastName, DateTime dateTime, User supervisor, Gender gender)
         {
             FirstName = firstName;
             LastName = lastName;
@@ -25,6 +29,7 @@ namespace LibraryManagement.Models
             BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
             LibraryMembership = new LibraryMembership(dateTime);
             Supervisor = supervisor;
+            Gender = gender;
         }
 
         public void ApplyRequest(BorrowRequest request)

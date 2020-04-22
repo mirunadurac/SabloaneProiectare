@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LibraryManagement.ChainOfResponsability
 {
-    class BorrowRequest
+    public class BorrowRequest
     {
         private static int LastRequestNumber;
         public int RequestNumber { get; set; }

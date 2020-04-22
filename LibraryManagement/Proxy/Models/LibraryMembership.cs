@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LibraryManagement.Proxy.Models
 {
-    class LibraryMembership : ILibraryMembership
+    public class LibraryMembership : ILibraryMembership
     {
 
         public DateTime EndDateValidity { get; set; }
