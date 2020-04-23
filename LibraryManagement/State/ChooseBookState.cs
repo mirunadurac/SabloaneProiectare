@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LibraryManagement.State
 {
-    class ChooseBookState : State
+    public class ChooseBookState : State
     {
         public ChooseBookState (User user, Menu menu):base(user, menu)
         {

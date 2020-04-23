@@ -32,6 +32,28 @@ namespace LibraryManagement.Models
             Gender = gender;
         }
 
+        public User(string firstName, string lastName, DateTime dateTime, Gender gender)
+        {
+            FirstName = firstName;
+            LastName = lastName;
+            IdUser = ++Id;
+            BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
+            LibraryMembership = new LibraryMembership(dateTime);
+            Gender = gender;
+        }
+
+        public User(int id,string username, string password,string firstName, string lastName, DateTime dateTime, Gender gender)
+        {
+            Username = username;
+            Password = password;
+            FirstName = firstName;
+            LastName = lastName;
+            IdUser = id;
+            BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
+            LibraryMembership = new LibraryMembership(dateTime);
+            Gender = gender;
+        }
+
         public void ApplyRequest(BorrowRequest request)
         {
             if (ApproveRequest(request))

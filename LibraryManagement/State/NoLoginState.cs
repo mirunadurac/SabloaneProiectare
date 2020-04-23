@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LibraryManagement.State
 {
-    class NoLoginState : State
+   public  class NoLoginState : State
     {
         public NoLoginState(User user, Menu menu) : base(user, menu)
         {
@@ -28,7 +28,8 @@ namespace LibraryManagement.State
 
         public override bool Login()
         {
-            throw new NotImplementedException();
+            Menu.SetMenuState(Menu.LoginState);
+            return true;
         }
 
         public override bool Return()

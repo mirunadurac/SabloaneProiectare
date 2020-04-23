@@ -13,6 +13,7 @@ namespace LibraryManagement.Database.Repository
         private readonly string AddUser = "INSERT INTO user(username, password, firstname, lastname, gender, validity) VALUES(@username, @password, @firstname, @lastname, @gender, @validity)";
         private readonly string DeleteUser = "DELETE FROM user WHERE iduser=@id";
         private readonly string FindUserById = "SELECT * FROM user WHERE iduser=@id";
+        private readonly string FindUserByUsername = "SELECT * FROM user WHERE username=@username";
         private readonly string UpdateUser = "UPDATE user SET username=@username, password=@password, firstname=@firstname, lastname=@lastname WHERE iduser=@id";
         private readonly string SelectAllUsers = "SELECT * FROM user";
         #endregion
@@ -88,9 +89,39 @@ namespace LibraryManagement.Database.Repository
                     if (reader.Read())
                     {
                         Enum.TryParse(reader.GetString(5), out Gender gender);
+                        
                         //TO DO:
                         //modify ID in user and here 
                         return new User(reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), null, gender);
+                    }
+                }
+            }
+            catch (MySqlException exception)
+            {
+                Console.WriteLine(exception.Message);
+            }
+
+            return null;
+        }
+
+        public User FindByUsername(string username)
+        {
+            if (connection == null) return null;
+            command = new MySqlCommand(FindUserByUsername, connection);
+
+            try
+            {
+                if (command != null)
+                {
+                    command.Parameters.AddWithValue("@username", username);
+                    command.Prepare();
+                    reader = command.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        Enum.TryParse(reader.GetString(5), out Gender gender);
+                        int id = reader.GetInt16(0);
+                        return new User(id, reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), gender);
                     }
                 }
             }

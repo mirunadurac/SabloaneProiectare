@@ -9,13 +9,13 @@ namespace LibraryManagement.State
     {
         State CurrentState { get; set;}
 
-        NoLoginState NoLoginState { get; set; }
-        LoginState LoginState { get; set; }
-        SeeBooksState SeeBooksState { get; set; }
-        ChooseBookState ChooseBookState { get; set; }
-        BorrowBookState BorrowBookState { get; set; }
-        LeaveState LeaveState { get; set; }
-        ReturnState ReturnState { get; set; }
+        public NoLoginState NoLoginState { get; set; }
+        public LoginState LoginState { get; set; }
+        public SeeBooksState SeeBooksState { get; set; }
+        public ChooseBookState ChooseBookState { get; set; }
+        public BorrowBookState BorrowBookState { get; set; }
+        public LeaveState LeaveState { get; set; }
+        public ReturnState ReturnState { get; set; }
 
         public Menu (User user)
         {
@@ -34,7 +34,7 @@ namespace LibraryManagement.State
             switch (option)
             {
                 case EUserOption.Login:
-                    
+                    this.Login();
                     break;
                 case EUserOption.SeeBooks:
                     
@@ -52,6 +52,11 @@ namespace LibraryManagement.State
 
                     break;
             }
+        }
+
+        void Login()
+        {
+            CurrentState.Login();
         }
 
         public void SetMenuState(State state)

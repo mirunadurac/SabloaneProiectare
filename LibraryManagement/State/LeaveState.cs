@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LibraryManagement.State
 {
-    class LeaveState : State
+    public class LeaveState : State
     {
         public LeaveState(User user, Menu menu) : base(user, menu)
         {
