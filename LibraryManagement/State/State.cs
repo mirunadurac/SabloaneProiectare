@@ -20,7 +20,7 @@ namespace LibraryManagement.State
         public abstract bool Login();
         public abstract bool SeeBooks();
         public abstract bool ChooseBook();
-        public abstract bool BorrowBook();
+        public abstract bool BorrowBook(int days);
         public abstract bool Leave();
 
         public abstract bool Return();

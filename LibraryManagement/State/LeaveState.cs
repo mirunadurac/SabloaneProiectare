@@ -11,7 +11,7 @@ namespace LibraryManagement.State
         {
 
         }
-        public override bool BorrowBook()
+        public override bool BorrowBook(int days)
         {
             throw new NotImplementedException();
         }

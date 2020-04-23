@@ -33,7 +33,7 @@ namespace LibraryManagement.Models
 
         public override string ToString()
         {
-            return $"[Id: {Id}, Title: {Title}, Autho: {Author}, Publication Date: {PublicationDate}]";
+            return $"[Id: {Id}, Title: {Title}, Author: {Author}, Publication Date: {PublicationDate}]";
         }
 
         public abstract EBookType Type();

@@ -17,9 +17,10 @@ namespace LibraryManagement.Models
         public string LastName { get; set; }
         public Gender Gender { get; set; }
         public List<KeyValuePair<DateTime,Book>> BorrowedBooks { get; set; }
+        public List<Book> CurrentChoose { get; set; } = new List<Book>();
         public LibraryMembership LibraryMembership { get; set; }
 
-        User Supervisor { get; set; }
+        public User Supervisor { get; set; }
 
         public User(string firstName, string lastName, DateTime dateTime, User supervisor, Gender gender)
         {

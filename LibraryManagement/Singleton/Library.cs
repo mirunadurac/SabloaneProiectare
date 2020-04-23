@@ -37,5 +37,10 @@ namespace LibraryManagement.Singleton
 
         }
 
+        public void SeeBooks()
+        {
+           Books.ForEach(book => Console.WriteLine(book));
+        }
+
     }
 }

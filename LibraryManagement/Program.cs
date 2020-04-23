@@ -18,7 +18,7 @@ namespace LibraryManagement
 {
     class Program
     {
-
+        static Library Library = Library.Instance;
         static int ShowFirstMenu()
         {
             int op;
@@ -89,8 +89,10 @@ namespace LibraryManagement
         {
             int op;
             Console.WriteLine("1.See Books");
-            Console.WriteLine("2.Borrow Book");
-            Console.WriteLine("3.Return Book");
+            Console.WriteLine("2.Choose a book");
+            Console.WriteLine("3.Borrow Book");
+            Console.WriteLine("4.Return Book");
+            Console.WriteLine("5.See the books borrowed");
             Console.WriteLine("0.Exit");
             try
             {
@@ -122,9 +124,8 @@ namespace LibraryManagement
             var books = bookGenerator.GenerateBooks();
             logger.Log(Status.Info, "Finished generating books");
             //books.ForEach(book => Console.WriteLine(book));
-
-            var library = Library.Instance;
-            library.Books = books;
+            
+            Library.Books = books;
             var databaseConnection = DatabaseConnection.Instance;
             databaseConnection.OpenConnection();
             var userRepository = new UserRepository<User>(databaseConnection.Connetion);
@@ -157,6 +158,9 @@ namespace LibraryManagement
                     else
                         Console.WriteLine("Wrong username or password");
             }
+            HeadOffice headOffice = new HeadOffice("Ofiice", "Head", DateTime.Now, null, Utils.Gender.Female);
+            Librarian librarian = new Librarian("Librarian", "Last", DateTime.Now, headOffice, Utils.Gender.Female);
+            userNew.Supervisor = librarian;
             menu.UpdateState(EUserOption.Login);
             Console.Clear();
             while (true)
@@ -165,10 +169,28 @@ namespace LibraryManagement
                 switch (op)
                 {
                     case 1:
-                        
+                        Console.Clear();
+                        Library.SeeBooks();
+                        menu.UpdateState(EUserOption.SeeBooks);
                         break;
                     case 2:
-                       
+                        Console.WriteLine("Choose the book you want");
+                        int idBook = Convert.ToInt32(Console.ReadLine());
+                        userNew.CurrentChoose.Add(books[idBook]);
+                        menu.UpdateState(EUserOption.ChooseBooks);
+                        break;
+                    case 3:
+                        Console.Clear();
+                        
+                        menu.UpdateState(EUserOption.BorrowBooks);
+                        break;
+                    case 4:
+                        Console.Clear();
+                        menu.UpdateState(EUserOption.ReturnBook);
+                        break;
+                    case 5:
+                        Console.Clear();
+                        userNew.BorrowedBooks.ForEach(book => Console.WriteLine(book.Value));
                         break;
                     case -1:
                         break;

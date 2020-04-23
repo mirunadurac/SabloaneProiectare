@@ -37,19 +37,19 @@ namespace LibraryManagement.State
                     this.Login();
                     break;
                 case EUserOption.SeeBooks:
-                    
+                    this.SeeBooks();
                     break;
                 case EUserOption.ChooseBooks:
-                    
+                    this.ChooseBook();
                     break;
                 case EUserOption.BorrowBooks:
-                   
+                    this.BorrowBook();
                     break;
                 case EUserOption.Leave:
-                    
+                    this.Leave();
                     break;
                 case EUserOption.ReturnBook:
-
+                    this.ReturnBook();
                     break;
             }
         }
@@ -57,6 +57,31 @@ namespace LibraryManagement.State
         void Login()
         {
             CurrentState.Login();
+        }
+
+        void SeeBooks()
+        {
+            CurrentState.SeeBooks();
+        }
+
+        void ChooseBook()
+        {
+            CurrentState.ChooseBook();
+        }
+
+        void BorrowBook()
+        {
+            Console.WriteLine("The number of days for borrow the book");
+            int days = Convert.ToInt32(Console.ReadLine());
+            CurrentState.BorrowBook(days);
+        }
+        void Leave()
+        {
+            CurrentState.Leave();
+        }
+        void ReturnBook()
+        {
+            CurrentState.Return();
         }
 
         public void SetMenuState(State state)

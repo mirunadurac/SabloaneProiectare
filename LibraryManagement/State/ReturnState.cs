@@ -1,6 +1,8 @@
-﻿using LibraryManagement.Models;
+﻿using LibraryManagement.ChainOfResponsability;
+using LibraryManagement.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace LibraryManagement.State
@@ -11,19 +13,35 @@ namespace LibraryManagement.State
         {
 
         }
-        public override bool BorrowBook()
+        public override bool BorrowBook(int days)
         {
-            throw new NotImplementedException();
+            if(User.CurrentChoose.Count==0)
+            {
+                Console.WriteLine("You need to choose some books first");
+            }
+
+            DateTime date = DateTime.Now.AddDays(days);
+            foreach (var book in User.CurrentChoose)
+            {
+                BorrowRequest borrowRequest = new BorrowRequest(DateTime.Now, date, book);
+                User.ApplyRequest(borrowRequest);
+            }
+           
+            Menu.SetMenuState(Menu.BorrowBookState);
+            return true;
         }
 
         public override bool ChooseBook()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("You need to see the books first");
+            return true;
         }
 
         public override bool Leave()
         {
-            throw new NotImplementedException();
+            Menu.SetMenuState(Menu.LeaveState);
+            User.CurrentChoose.Clear();
+            return true;
         }
 
         public override bool Login()
@@ -33,12 +51,34 @@ namespace LibraryManagement.State
 
         public override bool Return()
         {
-            throw new NotImplementedException();
+            if (User.BorrowedBooks.Count == 0)
+            {
+                Console.WriteLine("You don't have any borrowed book");
+                return false;
+            }
+            User.BorrowedBooks.ForEach(book => Console.WriteLine(book));
+            Console.WriteLine("Choose the book you want to return");
+            int idBook = Convert.ToInt32(Console.ReadLine());
+            int indexBook = -1;
+            for (int index = 0; index < User.BorrowedBooks.Count; index++)
+            {
+                if (User.BorrowedBooks[index].Value.Id == idBook)
+                    indexBook = index;
+            }
+            if (indexBook != -1)
+            {
+                User.BorrowedBooks.RemoveAt(indexBook);
+                Menu.SetMenuState(Menu.ReturnState);
+
+            }
+
+            return true;
         }
 
         public override bool SeeBooks()
         {
-            throw new NotImplementedException();
+            Menu.SetMenuState(Menu.SeeBooksState);
+            return true;
         }
     }
 }
