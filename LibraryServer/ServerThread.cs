@@ -1,6 +1,7 @@
 ﻿using LibraryManagement.Database;
 using LibraryManagement.Database.Repository;
 using LibraryManagement.FactoryMethod;
+using LibraryManagement.Flyweight;
 using LibraryManagement.Models;
 using LibraryManagement.Singleton;
 using LibraryManagement.State;
@@ -22,6 +23,8 @@ namespace LibraryServer
         private List<User> users = new List<User>();
         private DatabaseConnection databaseConnection;
         private UserRepository<User> userRepository;
+
+        static Report Report { get; set; } = new Report();
         public void StartServerThread(Socket inClientSocket)
         {
             clientSocket = inClientSocket;
@@ -92,6 +95,8 @@ namespace LibraryServer
                         string serializedObject = JToken.FromObject(book).ToString();
                         byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
                         clientSocket.Send(msg);
+                        Report.AddNewBook(book.Type());
+                        Report.SeeReport();
                     }
                     break;
                 case 3:
@@ -101,13 +106,25 @@ namespace LibraryServer
             }
         }
 
+        private void CommandAdmin(int op)
+        {
+            byte[] bytes = null;
+            bytes = new byte[1024];
+            //string serializedObject = JToken.FromObject(Report).ToString();
+            byte[] msg = Encoding.ASCII.GetBytes(Report.SeeReport());
+            clientSocket.Send(msg);
+            msg = Encoding.ASCII.GetBytes(Report.TotalBorrowBook());
+            clientSocket.Send(msg);
+            Report.SeeReport();
+
+        }
         private void Execute()
         {
             try
             {
                 string receivedOption = null;
                 byte[] bytes = null;
-
+                User currentUser = null;
                 while (true)
                 {
                     bytes = new byte[1024];
@@ -116,7 +133,7 @@ namespace LibraryServer
 
                     var userToVerify = JToken.Parse(receivedOption).ToObject<KeyValuePair<int, User>>();
                     Console.WriteLine("User to verify: ", userToVerify);
-                    User currentUser = LoginRegister(userToVerify, userRepository);
+                    currentUser = LoginRegister(userToVerify, userRepository);
                     if (currentUser != null)
                     {
                         string serializedObject = JToken.FromObject(currentUser).ToString();
@@ -133,14 +150,28 @@ namespace LibraryServer
                     }
                 }
 
-                while (true)
+                if (currentUser.Role == Role.User)
                 {
-                    bytes = new byte[1024];
-                    int bytesRec = clientSocket.Receive(bytes);
-                    receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                    int userOption = Convert.ToInt32(receivedOption);
-                    Command(userOption);
+                    while (true)
+                    {
+                        bytes = new byte[1024];
+                        int bytesRec = clientSocket.Receive(bytes);
+                        receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                        int userOption = Convert.ToInt32(receivedOption);
+                        Command(userOption);
 
+                    }
+                }
+                else
+                {
+                    while (true)
+                    {
+                        bytes = new byte[1024];
+                        int bytesRec = clientSocket.Receive(bytes);
+                        receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                        int userOption = Convert.ToInt32(receivedOption);
+                        CommandAdmin(userOption);
+                    }
                 }
             }
             catch (ArgumentNullException ane)

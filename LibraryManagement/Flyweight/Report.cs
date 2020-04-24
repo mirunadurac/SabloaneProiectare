@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LibraryManagement.FactoryMethod;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,38 +7,41 @@ namespace LibraryManagement.Flyweight
 {
     public class Report
     {
-        RegisterMagazine RegisterMagazine { get; set; } = new RegisterMagazine();
-        RegisterNewspaper RegisterNewspaper { get; set; } = new RegisterNewspaper();
-        RegisterPaperBook RegisterPaperBook { get; set; } = new RegisterPaperBook();
+        RegisterFiction RegisterFiction { get; set; } = new RegisterFiction();
+        RegisterNonFiction RegisterNonFiction { get; set; } = new RegisterNonFiction();
 
 
-        private BookRegister GetBookRegister(EBookMaterialType type)
+        private BookRegister GetBookRegister(EBookType type)
         {
             BookRegister register = null;
 
             switch (type)
             {
-                case EBookMaterialType.Magazine:
-                    register = RegisterMagazine;
+                case EBookType.Fiction:
+                    register = RegisterFiction;
                     break;
-                case EBookMaterialType.Newspaper:
-                    register = RegisterNewspaper;
+                case EBookType.NonFiction:
+                    register = RegisterNonFiction;
                     break;
-                case EBookMaterialType.PaperBook:
-                    register = RegisterPaperBook;
-                    break;
+
             }
 
             return register;
         }
-        public void AddNewBook(EBookMaterialType type)
+        public void AddNewBook(EBookType type)
         {
             GetBookRegister(type).AddABook(type);
         }
 
-        public void SeeReport()
+        public string TotalBorrowBook()
         {
-            RegisterNewspaper.SeeReport();
+            int total = RegisterNonFiction.NumberOfBook() + RegisterFiction.NumberOfBook();
+            return total.ToString();
+        }
+
+        public string SeeReport()
+        {
+            return RegisterFiction.SeeReport();
         }
     }
 }

@@ -293,6 +293,18 @@ namespace LibraryClient
                     case 2:
                         AddBook();
                         break;
+                    case 3:
+                        byte[] msg = Encoding.ASCII.GetBytes("3");
+                        int bytesSent = sender.Send(msg);
+                        int bytesRec = sender.Receive(bytes);
+                        string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+
+                        Console.WriteLine("Report: \n" + receivedMessage);
+                        bytesRec = sender.Receive(bytes);
+                        receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                        Console.WriteLine("Total borrow books:" + receivedMessage);
+
+                        break;
 
 
                 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LibraryManagement.FactoryMethod;
+using LibraryManagement.Models;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,31 +8,32 @@ namespace LibraryManagement.Flyweight
 {
     public abstract class BookRegister
     {
-        public Dictionary<EBookMaterialType, int> borrowedBook { get; set; }
+        public Dictionary<EBookType, int> borrowedBook { get; set; }
 
-        //public void CountBorrowedType(EBookMaterialType type)
-        //{
+        public BookRegister()
+        {
+            borrowedBook = new Dictionary<EBookType, int>();
+        }
 
-
-        //}
-
-        public void AddABook(EBookMaterialType type)
+        public void AddABook(EBookType type)
         {
             if (borrowedBook.ContainsKey(type))
                 borrowedBook[type]++;
             else borrowedBook.Add(type, 1);
         }
 
-        public void SeeReport()
+        public string SeeReport()
         {
+            string str = "";
             foreach (var it in borrowedBook)
             {
-                Console.WriteLine(it.Key + " " + it.Value.ToString());
+                str += it.Key + " " + it.Value.ToString() + "\n";
             }
+            return str;
         }
 
 
-        public abstract BookFormat CreateNewBook();
-        public abstract bool IsAvailable(double value);
+        public abstract Book CreateNewBook();
+        public abstract int NumberOfBook();
     }
 }

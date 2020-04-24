@@ -17,5 +17,10 @@ namespace LibraryManagement.FactoryMethod
         {
 
         }
+
+        public NonFiction()
+        {
+
+        }
     }
 }

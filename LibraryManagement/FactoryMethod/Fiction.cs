@@ -17,5 +17,7 @@ namespace LibraryManagement.FactoryMethod
         {
 
         }
+
+        public Fiction() { }
     }
 }

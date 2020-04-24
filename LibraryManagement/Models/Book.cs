@@ -30,6 +30,7 @@ namespace LibraryManagement.Models
 
         }
 
+        public Book() { }
 
         public override string ToString()
         {
