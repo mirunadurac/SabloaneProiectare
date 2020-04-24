@@ -18,6 +18,7 @@ namespace LibraryServer
     {
         private Socket clientSocket;
         Library Library = Library.Instance;
+        List<User> users = new List<User>();
         public void StartServerThread(Socket inClientSocket)
         {
             clientSocket = inClientSocket;
@@ -118,6 +119,7 @@ namespace LibraryServer
                         string serializedObject = JToken.FromObject(message).ToString();
                         byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
                         clientSocket.Send(msg);
+                        users.Add(message);
                         break;
                     }
                     else
