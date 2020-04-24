@@ -35,6 +35,16 @@ namespace LibraryManagement.Models
             Gender = gender;
         }
 
+        public User(int id, string username, string firstName, string lastName, string password)
+        {
+            FirstName = firstName;
+            LastName = lastName;
+            IdUser = id;
+            Password = password;
+            Username = username;
+
+        }
+
         public User(string firstName, string lastName, DateTime dateTime, Gender gender)
         {
             FirstName = firstName;

@@ -5,6 +5,7 @@ using LibraryManagement.Flyweight;
 using LibraryManagement.Models;
 using LibraryManagement.Singleton;
 using LibraryManagement.State;
+using LibraryManagement.Utils;
 using Newtonsoft.Json.Linq;
 using Renci.SshNet;
 using System;
@@ -99,9 +100,11 @@ namespace LibraryServer
                         Report.SeeReport();
                     }
                     break;
-                case 3:
-                    Console.Clear();
-
+                case 6:
+                    int bytesRec2 = clientSocket.Receive(bytes);
+                    string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec2);
+                    var user = JToken.Parse(receivedMessage).ToObject<User>();
+                    userRepository.Update(user);
                     break;
             }
         }

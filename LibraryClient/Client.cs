@@ -3,6 +3,7 @@ using LibraryManagement.FactoryMethod;
 using LibraryManagement.Models;
 using LibraryManagement.Observer.Logger;
 using LibraryManagement.Observer.Logging;
+using LibraryManagement.Proxy.ChangePassword;
 using LibraryManagement.Singleton;
 using LibraryManagement.State;
 using LibraryManagement.Utils;
@@ -116,6 +117,7 @@ namespace LibraryClient
             Console.WriteLine("3.Borrow Book");
             Console.WriteLine("4.Return Book");
             Console.WriteLine("5.See the books borrowed");
+            Console.WriteLine("6.Change Password");
             Console.WriteLine("0.Exit");
             try
             {
@@ -129,11 +131,13 @@ namespace LibraryClient
             }
         }
 
+
         private int ShowHomeAdmin()
         {
             int userOption;
             Console.WriteLine("1.See Books");
             Console.WriteLine("2.Add Books");
+            Console.WriteLine("3.See Report");
             Console.WriteLine("0.Exit");
             try
             {
@@ -144,6 +148,26 @@ namespace LibraryClient
             {
                 Console.WriteLine("Please choose a valid option");
                 return -1;
+            }
+        }
+
+        private void ChangePassword(User userNew)
+        {
+            SafeUserProxy safeUserProxy = new SafeUserProxy();
+            User user = safeUserProxy.ChangePassword(userNew);
+            if (user != null)
+            {
+                byte[] msg = Encoding.ASCII.GetBytes("6");
+                int bytesSent = sender.Send(msg);
+                User user2 = new User(user.IdUser, user.Username, user.FirstName, user.LastName, user.Password);
+                string serializedObject = JToken.FromObject(user2).ToString();
+                msg = Encoding.ASCII.GetBytes(serializedObject);
+                bytesSent = sender.Send(msg);
+
+            }
+            else
+            {
+                Console.WriteLine("Old password fail");
             }
         }
 
@@ -192,6 +216,12 @@ namespace LibraryClient
                     case 5:
                         Console.Clear();
                         userNew.BorrowedBooks.ForEach(book => Console.WriteLine(book.Value));
+                        break;
+                    case 6:
+                        Console.Clear();
+                        ChangePassword(userNew);
+
+                        Console.Clear();
                         break;
                     case -1:
                         break;

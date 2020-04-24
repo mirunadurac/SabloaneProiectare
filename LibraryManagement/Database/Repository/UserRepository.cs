@@ -153,7 +153,27 @@ namespace LibraryManagement.Database.Repository
 
         public void Update(User entity)
         {
-            //TO DO
+            command = new MySqlCommand(UpdateUser, connection);
+            try
+            {
+                if (command != null)
+                {
+                    command.Parameters.AddWithValue("@id", entity.IdUser);
+                    command.Parameters.AddWithValue("@username", entity.Username);
+                    command.Parameters.AddWithValue("@password", entity.Password);
+                    command.Parameters.AddWithValue("@firstname", entity.FirstName);
+                    command.Parameters.AddWithValue("@lastname", entity.LastName);
+
+
+                    command.Prepare();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (MySqlException exception)
+            {
+                Console.WriteLine(exception.Message);
+            }
+
         }
 
         public List<User> SelectAll()
