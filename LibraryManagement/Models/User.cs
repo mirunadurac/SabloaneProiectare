@@ -45,6 +45,11 @@ namespace LibraryManagement.Models
             Gender = gender;
         }
 
+        public User()
+        {
+            BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
+        }
+
         public User(int id,string username, string password,string firstName, string lastName, DateTime dateTime, Gender gender, String role)
         {
             Username = username;
@@ -90,6 +95,11 @@ namespace LibraryManagement.Models
                 return true;
             else
                 return false;
+        }
+
+        public override string ToString()
+        {
+            return Username + " " + FirstName + " " + LastName;
         }
     }
 }

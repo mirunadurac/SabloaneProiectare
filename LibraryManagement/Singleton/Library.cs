@@ -11,7 +11,7 @@ namespace LibraryManagement.Singleton
         private static object padlock = new object();
         private static Library instance;
 
-        public List<Book> Books { get; set; }
+        public static List<Book> Books { get; set; }
 
         public static Library Instance
         {
@@ -34,7 +34,8 @@ namespace LibraryManagement.Singleton
 
         private Library()
         {
-
+            var bookGenerator = BookGenerator.Instance;
+            Books = bookGenerator.GenerateBooks();
         }
 
         public void SeeBooks()

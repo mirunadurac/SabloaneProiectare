@@ -26,12 +26,14 @@ namespace LibraryManagement.Database.Repository
         public UserRepository(MySqlConnection connection)
         {
             this.connection = connection;
+           
         }
 
         public void Add(User entity)
         {
             if (connection == null) return;
             command = new MySqlCommand(AddUser, connection);
+            
 
             try
             {
@@ -53,13 +55,14 @@ namespace LibraryManagement.Database.Repository
             {
                 Console.WriteLine(exception.Message);
             }
+           
         }
 
         public void Delete(User entity)
         {
             if (connection == null) return;
             command = new MySqlCommand(DeleteUser, connection);
-
+           
             try
             {
                 if (command != null)
@@ -73,6 +76,7 @@ namespace LibraryManagement.Database.Repository
             {
                 Console.WriteLine(exception.Message);
             }
+           
         }
 
         public User FindById(int Id)
@@ -91,10 +95,12 @@ namespace LibraryManagement.Database.Repository
                     if (reader.Read())
                     {
                         Enum.TryParse(reader.GetString(5), out Gender gender);
-                        
+
                         //TO DO:
                         //modify ID in user and here 
-                        return new User(reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), null, gender);
+                        User user = new User(reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), null, gender);
+                        reader.Close();
+                        return user;
                     }
                 }
             }
@@ -108,6 +114,9 @@ namespace LibraryManagement.Database.Repository
 
         public User FindByUsername(string username)
         {
+
+           
+            
             if (connection == null) return null;
             command = new MySqlCommand(FindUserByUsername, connection);
 
@@ -123,9 +132,12 @@ namespace LibraryManagement.Database.Repository
                     {
                         Enum.TryParse(reader.GetString(5), out Gender gender);
                         int id = reader.GetInt16(0);
-                        return new User(id, reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), gender, reader.GetString(7));
+                        User user= new User(id, reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), gender, reader.GetString(7));
+                    reader.Close();
+                    return user;
                     }
-                }
+                
+            }
             }
             catch (MySqlException exception)
             {
@@ -146,7 +158,7 @@ namespace LibraryManagement.Database.Repository
 
             if (connection == null) return null;
             command = new MySqlCommand(SelectAllUsers, connection);
-
+            
             try
             {
                 if (command != null)
@@ -159,12 +171,13 @@ namespace LibraryManagement.Database.Repository
                         Enum.TryParse(reader.GetString(5), out Gender gender);
                         users.Add(new User(reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), null, gender));
                     }
+                    reader.Close();
                 }
             }
             catch (MySqlException exception)
             {
                 Console.WriteLine(exception.Message);
-            }
+                            }
 
             return users; 
         }

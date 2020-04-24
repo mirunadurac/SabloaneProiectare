@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace LibraryServer
 {
@@ -38,6 +39,7 @@ namespace LibraryServer
                         handler = listener.Accept();
                         ServerThread server = new ServerThread();
                         server.StartServerThread(handler);
+                       
                     }
 
                     
