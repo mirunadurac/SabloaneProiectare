@@ -5,7 +5,7 @@ using LibraryManagement.Models;
 
 namespace LibraryManagement.FactoryMethod
 {
-    class NonFictionFactory: BookFactory
+    public class NonFictionFactory: BookFactory
     {
         public override Book GetBook(string title, string author, int publicationDate)
         {

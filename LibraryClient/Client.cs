@@ -13,6 +13,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 
 namespace LibraryClient
@@ -119,7 +120,25 @@ namespace LibraryClient
             }
         }
 
-         void UserMenu(User userNew, Menu menu)
+        int ShowHomeAdmin()
+        {
+            int op;
+            Console.WriteLine("1.See Books");
+            Console.WriteLine("2.Add Books");
+            Console.WriteLine("0.Exit");
+            try
+            {
+                op = Convert.ToInt32(Console.ReadLine());
+                return op;
+            }
+            catch
+            {
+                Console.WriteLine("Please choose a valid option");
+                return -1;
+            }
+        }
+
+        void UserMenu(User userNew, Menu menu)
         {
             byte[] bytes = new byte[1024];
             bool cont = true;
@@ -172,9 +191,103 @@ namespace LibraryClient
             }
         }
 
-        static void AdminMenu()
-        {
 
+        Book MakeFiction()
+        {
+            while (true)
+            {
+                try
+                {
+                    Console.WriteLine("Title ");
+                    string title = Console.ReadLine();
+                    Console.WriteLine("Author");
+                    string author = Console.ReadLine();
+                    Console.WriteLine("Publication date (year)");
+                    int date = Convert.ToInt32(Console.ReadLine());
+                    FictionFactory fictionFactory = new FictionFactory();
+                    return fictionFactory.GetBook(title, author, date);
+                }
+                catch
+                {
+                    Console.WriteLine("Something wrong");
+                }
+            }
+        }
+
+        Book MakeNonFiction()
+        {
+            while (true)
+            {
+                try
+                {
+                    Console.WriteLine("Title ");
+                    string title = Console.ReadLine();
+                    Console.WriteLine("Author");
+                    string author = Console.ReadLine();
+                    Console.WriteLine("Publication date (year)");
+                    int date = Convert.ToInt32(Console.ReadLine());
+                    NonFictionFactory nonFictionFactory = new NonFictionFactory();
+                    return nonFictionFactory.GetBook(title, author, date);
+                }
+                catch
+                {
+                    Console.WriteLine("Something wrong");
+                }
+            }
+        }
+
+        void AddBook()
+        {
+            int op=0;
+            Console.WriteLine("Choose the type");
+            Console.WriteLine("1.Fiction");
+            Console.WriteLine("2.NonFiction");
+            try
+            {
+                op = Convert.ToInt32(Console.ReadLine());
+                
+            }
+            catch
+            {
+                Console.WriteLine("Please choose a valid option");
+                
+            }
+            switch (op)
+            {
+                case 1:
+                    Library.Books.Add(MakeFiction());
+                    break;
+                case 2:
+                    Library.Books.Add(MakeNonFiction());
+                    break;
+            }
+           
+        }
+
+         void AdminMenu()
+        {
+            byte[] bytes = new byte[1024];
+            bool cont = true;
+            while (cont)
+            {
+                int op = ShowHomeAdmin();
+
+                switch (op)
+                {
+                    case 0:
+                        cont = false;
+                        break;
+                    case 1:
+                        Console.Clear();
+                        Library.SeeBooks();
+                        break;
+                    case 2:
+                        AddBook();
+                        break;
+                    
+
+                }
+            }
         }
 
         public void StartClient()
