@@ -109,6 +109,7 @@ namespace LibraryManagement.Database.Repository
                 Console.WriteLine(exception.Message);
             }
 
+            reader.Close();
             return null;
         }
 
@@ -145,6 +146,8 @@ namespace LibraryManagement.Database.Repository
                 Console.WriteLine(exception.Message);
             }
 
+
+            reader.Close();
             return null;
         }
 
@@ -180,6 +183,7 @@ namespace LibraryManagement.Database.Repository
                 Console.WriteLine(exception.Message);
             }
 
+            reader.Close();
             return users;
         }
     }
