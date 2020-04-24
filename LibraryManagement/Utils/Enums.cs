@@ -11,4 +11,10 @@ namespace LibraryManagement.Utils
         Unknown
     }
 
+    public enum Role
+    {
+        Admin,
+        User
+    }
+
 }

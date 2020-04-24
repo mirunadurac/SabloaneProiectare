@@ -20,7 +20,7 @@ namespace LibraryManagement.Models
         public List<KeyValuePair<DateTime,Book>> BorrowedBooks { get; set; }
         public List<Book> CurrentChoose { get; set; } = new List<Book>();
         public LibraryMembership LibraryMembership { get; set; }
-        public String Role { get; set; }
+        public Role Role { get; set; }
 
         public User Supervisor { get; set; }
 
@@ -50,7 +50,7 @@ namespace LibraryManagement.Models
             BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
         }
 
-        public User(int id,string username, string password,string firstName, string lastName, DateTime dateTime, Gender gender, String role)
+        public User(int id,string username, string password,string firstName, string lastName, DateTime dateTime, Gender gender, Role role)
         {
             Username = username;
             Password = password;
