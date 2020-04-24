@@ -26,9 +26,7 @@ namespace LibraryServer
             try
             {
                 Socket handler = null;
-                // Create a Socket that will use Tcp protocol      
-                Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                // A Socket must be associated with an endpoint using the Bind method  
+                Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);             
                 listener.Bind(localEndPoint);
 
                 try

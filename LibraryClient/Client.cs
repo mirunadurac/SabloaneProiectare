@@ -18,13 +18,15 @@ using System.Text;
 
 namespace LibraryClient
 {
-    class Client
+    public class Client
     {
-        static Library Library = Library.Instance;
-        IPHostEntry host;
-        IPAddress ipAddress;
-        IPEndPoint remoteEP;
-        Socket sender;
+        private static Library Library = Library.Instance;
+        private IPHostEntry host;
+        private IPAddress ipAddress;
+        private IPEndPoint remoteEP;
+        private Socket sender;
+
+        private Logger logger;
 
         public Client(IPHostEntry host, IPAddress ipAddress, IPEndPoint remoteEP, Socket sender)
         {
@@ -32,18 +34,34 @@ namespace LibraryClient
             this.ipAddress = ipAddress;
             this.remoteEP = remoteEP;
             this.sender = sender;
+
+            // Connect to Remote EndPoint  
+            sender.Connect(remoteEP);
+            Console.WriteLine("Socket connected to {0}", sender.RemoteEndPoint.ToString());
+            InitializeLogger();
         }
 
+        private void InitializeLogger()
+        {
+            string outputPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            logger = Logger.Instance;
+            logger.AddObservers(new List<ILoggingService>()
+                            {
+                                new ConsoleLogger(),
+                                new FileLogger(new FileInfo(Path.Combine(outputPath, "logs.txt")))
+                            }
+            );
+        }
 
         private int ShowFirstMenu()
         {
-            int op;
+            int userOption;
             Console.WriteLine("1.Register");
             Console.WriteLine("2.Login");
             try
             {
-                op = Convert.ToInt32(Console.ReadLine());
-                return op;
+                userOption = Convert.ToInt32(Console.ReadLine());
+                return userOption;
             }
             catch
             {
@@ -56,11 +74,11 @@ namespace LibraryClient
         {
             Console.Write("Username: ");
             string username = Console.ReadLine();
-            Console.Write("\nPassword");
+            Console.Write("\nPassword: ");
             string password = Console.ReadLine();
-            Console.Write("\nFirst Name");
+            Console.Write("\nFirst Name: ");
             string firstname = Console.ReadLine();
-            Console.Write("\nLast name");
+            Console.Write("\nLast name: ");
             string lastname = Console.ReadLine();
             DateTime endTime = new DateTime(DateTime.Now.Year + 1, DateTime.Now.Month, DateTime.Now.Day);
 
@@ -69,8 +87,8 @@ namespace LibraryClient
             Console.WriteLine("2.Female");
             Console.WriteLine("3.Unknown");
 
-            int op = Convert.ToInt32(Console.ReadLine());
-            Gender gender = (Gender)op;
+            int genderOption = Convert.ToInt32(Console.ReadLine());
+            Gender gender = (Gender)genderOption;
 
             User user = new User(firstname, lastname, endTime, gender);
             user.Username = username;
@@ -82,9 +100,9 @@ namespace LibraryClient
         private User Login()
         {
             User user = new User();
-            Console.WriteLine("Username");
+            Console.Write("Username: ");
             user.Username = Console.ReadLine();
-            Console.WriteLine("Password");
+            Console.Write("\nPassword: ");
             user.Password = Console.ReadLine();
 
             return user;
@@ -92,7 +110,7 @@ namespace LibraryClient
 
         private int ShowHome()
         {
-            int op;
+            int userOption;
             Console.WriteLine("1.See Books");
             Console.WriteLine("2.Choose a book");
             Console.WriteLine("3.Borrow Book");
@@ -101,8 +119,8 @@ namespace LibraryClient
             Console.WriteLine("0.Exit");
             try
             {
-                op = Convert.ToInt32(Console.ReadLine());
-                return op;
+                userOption = Convert.ToInt32(Console.ReadLine());
+                return userOption;
             }
             catch
             {
@@ -113,14 +131,14 @@ namespace LibraryClient
 
         private int ShowHomeAdmin()
         {
-            int op;
+            int userOption;
             Console.WriteLine("1.See Books");
             Console.WriteLine("2.Add Books");
             Console.WriteLine("0.Exit");
             try
             {
-                op = Convert.ToInt32(Console.ReadLine());
-                return op;
+                userOption = Convert.ToInt32(Console.ReadLine());
+                return userOption;
             }
             catch
             {
@@ -135,9 +153,9 @@ namespace LibraryClient
             bool cont = true;
             while (cont)
             {
-                int op = ShowHome();
+                int userOption = ShowHome();
 
-                switch (op)
+                switch (userOption)
                 {
                     case 0:
                         cont = false;
@@ -285,32 +303,19 @@ namespace LibraryClient
         {
             try
             {
-                // Connect to Remote EndPoint  
-                sender.Connect(remoteEP);
-
-                Console.WriteLine("Socket connected to {0}",
-                    sender.RemoteEndPoint.ToString());
-
-                string outputPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var logger = Logger.Instance;
-                logger.AddObservers(new List<ILoggingService>()
-                            {
-                                new ConsoleLogger(),
-                                new FileLogger(new FileInfo(Path.Combine(outputPath, "logs.txt")))
-                            }
-                );
+                User userNew = null;
+                Menu menu = null;
 
                 logger.Log(Status.Info, "Finished generating books");
                 //books.ForEach(book => Console.WriteLine(book));
 
-                User userNew = null;
-                Menu menu = null;
+               
                 byte[] bytes = new byte[1024];
-                bool ok = true;
-                while (ok)
+                bool isActive = true;
+                while (isActive)
                 {
-                    int op = ShowFirstMenu();
-                    switch (op)
+                    int userOption = ShowFirstMenu();
+                    switch (userOption)
                     {
                         case 1:
                             userNew = Register();
@@ -322,9 +327,9 @@ namespace LibraryClient
                             break;
 
                     }
-                    if (op != -1)
+                    if (userOption != -1)
                     {
-                        KeyValuePair<int, User> data = new KeyValuePair<int, User>(op, userNew);
+                        KeyValuePair<int, User> data = new KeyValuePair<int, User>(userOption, userNew);
                         string serializedObject = JToken.FromObject(data).ToString();
                         byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
                         int bytesSent = sender.Send(msg);
@@ -333,7 +338,7 @@ namespace LibraryClient
                         try
                         {
                             userNew = JToken.Parse(receivedMessage).ToObject<User>();
-                            ok = false;
+                            isActive = false;
                             menu = new Menu(userNew);
 
                             Console.WriteLine("Welcome");
@@ -345,6 +350,7 @@ namespace LibraryClient
 
                     }
                 }
+
                 if (userNew.Role == Role.User)
                 {
                     HeadOffice headOffice = new HeadOffice("Ofiice", "Head", DateTime.Now, null, Gender.Female);

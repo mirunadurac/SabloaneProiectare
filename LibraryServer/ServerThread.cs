@@ -17,9 +17,11 @@ namespace LibraryServer
     public class ServerThread
     {
         private Socket clientSocket;
-        Library Library = Library.Instance;
-        List<User> users = new List<User>();
-        DatabaseConnection databaseConnection;
+
+        private Library Library = Library.Instance;
+        private List<User> users = new List<User>();
+        private DatabaseConnection databaseConnection;
+        private UserRepository<User> userRepository;
         public void StartServerThread(Socket inClientSocket)
         {
             clientSocket = inClientSocket;
@@ -35,29 +37,29 @@ namespace LibraryServer
                     return userCheck;
             return null;
         }
-        private User LoginRegister(KeyValuePair<int,User> pair, UserRepository<User> userRepository)
+
+        private User LoginRegister(KeyValuePair<int, User> pair, UserRepository<User> userRepository)
         {
-            int op = pair.Key;
+            int option = pair.Key;
             User userNew = pair.Value;
-            switch (op)
+            switch (option)
             {
                 case 1:
                     userRepository.Add(userNew);
-                   
+
                     break;
                 case 2:
                     userNew = Login(userRepository, userNew);
-                    
-                    break;
 
+                    break;
             }
 
             return userNew;
         }
-        
+
         private int LookForBook(int id)
         {
-            for(int index=0;index<Library.Books.Count;index++)
+            for (int index = 0; index < Library.Books.Count; index++)
             {
                 if (Library.Books[index].Id == id)
                     return index;
@@ -68,13 +70,15 @@ namespace LibraryServer
         public ServerThread(DatabaseConnection databaseConnection)
         {
             this.databaseConnection = databaseConnection;
+            userRepository = new UserRepository<User>(databaseConnection.Connetion);
+
         }
         private void Command(int op)
         {
             byte[] bytes = null;
 
-          
-           bytes = new byte[1024];
+
+            bytes = new byte[1024];
             switch (op)
             {
 
@@ -92,38 +96,34 @@ namespace LibraryServer
                     break;
                 case 3:
                     Console.Clear();
-                    
-                    break;
 
+                    break;
             }
         }
 
         private void Execute()
         {
-           
-            var userRepository = new UserRepository<User>(databaseConnection.Connetion);
-
-            // Incoming data from the client. 
             try
             {
-                string data = null;
+                string receivedOption = null;
                 byte[] bytes = null;
 
                 while (true)
                 {
                     bytes = new byte[1024];
                     int bytesRec = clientSocket.Receive(bytes);
-                    data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                    receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
 
-                    var fooReceived = JToken.Parse(data).ToObject<KeyValuePair<int,User>>();
-                    Console.WriteLine("Text received : {0}", fooReceived);
-                    User message = LoginRegister(fooReceived, userRepository);
-                    if (message != null)
+                    var userToVerify = JToken.Parse(receivedOption).ToObject<KeyValuePair<int, User>>();
+                    Console.WriteLine("User to verify: ", userToVerify);
+                    User currentUser = LoginRegister(userToVerify, userRepository);
+                    if (currentUser != null)
                     {
-                        string serializedObject = JToken.FromObject(message).ToString();
+                        string serializedObject = JToken.FromObject(currentUser).ToString();
                         byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
                         clientSocket.Send(msg);
-                        users.Add(message);
+                        users.Add(currentUser);
+                        Console.WriteLine(users.Count);
                         break;
                     }
                     else
@@ -131,23 +131,16 @@ namespace LibraryServer
                         byte[] msg = Encoding.ASCII.GetBytes("Wrong user name or password");
                         clientSocket.Send(msg);
                     }
-
-
-                    if (data.IndexOf("Stop") > -1)
-                    {
-                        break;
-                    }
-                   
                 }
-               
-                while(true)
+
+                while (true)
                 {
                     bytes = new byte[1024];
                     int bytesRec = clientSocket.Receive(bytes);
-                    data = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                    int op = Convert.ToInt32(data);
-                    Command(op);
-                    
+                    receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                    int userOption = Convert.ToInt32(receivedOption);
+                    Command(userOption);
+
                 }
             }
             catch (ArgumentNullException ane)
