@@ -19,6 +19,7 @@ namespace LibraryServer
         private Socket clientSocket;
         Library Library = Library.Instance;
         List<User> users = new List<User>();
+        DatabaseConnection databaseConnection;
         public void StartServerThread(Socket inClientSocket)
         {
             clientSocket = inClientSocket;
@@ -64,6 +65,10 @@ namespace LibraryServer
             return -1;
         }
 
+        public ServerThread(DatabaseConnection databaseConnection)
+        {
+            this.databaseConnection = databaseConnection;
+        }
         private void Command(int op)
         {
             byte[] bytes = null;
@@ -95,10 +100,9 @@ namespace LibraryServer
 
         private void Execute()
         {
-            var databaseConnection = DatabaseConnection.Instance;
-            databaseConnection.OpenConnection();
+           
             var userRepository = new UserRepository<User>(databaseConnection.Connetion);
-            
+
             // Incoming data from the client. 
             try
             {
@@ -127,7 +131,7 @@ namespace LibraryServer
                         byte[] msg = Encoding.ASCII.GetBytes("Wrong user name or password");
                         clientSocket.Send(msg);
                     }
-                    
+
 
                     if (data.IndexOf("Stop") > -1)
                     {

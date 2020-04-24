@@ -26,12 +26,12 @@ namespace LibraryClient
         IPEndPoint remoteEP;
         Socket sender;
 
-        public Client()
+        public Client(IPHostEntry host, IPAddress ipAddress, IPEndPoint remoteEP, Socket sender)
         {
-            host = Dns.GetHostEntry("localhost");
-            ipAddress = host.AddressList[0];
-            remoteEP = new IPEndPoint(ipAddress, 11000);
-            sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.host = host;
+            this.ipAddress = ipAddress;
+            this.remoteEP = remoteEP;
+            this.sender = sender;
         }
 
 

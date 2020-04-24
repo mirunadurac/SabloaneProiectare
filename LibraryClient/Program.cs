@@ -21,11 +21,14 @@ namespace LibraryClient
     class Program
     {
         
-
-        
         static void Main(string[] args)
         {
-            Client client = new Client();
+
+            IPHostEntry host = Dns.GetHostEntry("localhost");
+            IPAddress ipAddress = host.AddressList[0];
+            IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
+            Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            Client client = new Client(host, ipAddress, remoteEP, sender);
             client.StartClient();
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LibraryManagement.Database;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,10 +10,14 @@ namespace LibraryServer
     {
         static void Main(string[] args)
         {
-            StartServer();
+            var databaseConnection = DatabaseConnection.Instance;
+            databaseConnection.OpenConnection();
+
+             StartServer(databaseConnection);
+
         }
 
-        public static void StartServer()
+        public static void StartServer(DatabaseConnection  databaseConnection)
         {
             IPHostEntry host = Dns.GetHostEntry("localhost");
             IPAddress ipAddress = host.AddressList[0];
@@ -37,7 +42,7 @@ namespace LibraryServer
                     while (true)
                     {
                         handler = listener.Accept();
-                        ServerThread server = new ServerThread();
+                        ServerThread server = new ServerThread(databaseConnection);
                         server.StartServerThread(handler);
                        
                     }
