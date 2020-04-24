@@ -10,7 +10,7 @@ namespace LibraryManagement.Database.Repository
     public class UserRepository<T> : IRepository<User>
     {
         #region Prepared Statements
-        private readonly string AddUser = "INSERT INTO user(username, password, firstname, lastname, gender, validity) VALUES(@username, @password, @firstname, @lastname, @gender, @validity)";
+        private readonly string AddUser = "INSERT INTO user(username, password, firstname, lastname, gender, validity, role) VALUES(@username, @password, @firstname, @lastname, @gender, @validity, @role)";
         private readonly string DeleteUser = "DELETE FROM user WHERE iduser=@id";
         private readonly string FindUserById = "SELECT * FROM user WHERE iduser=@id";
         private readonly string FindUserByUsername = "SELECT * FROM user WHERE username=@username";
@@ -43,6 +43,8 @@ namespace LibraryManagement.Database.Repository
                     command.Parameters.AddWithValue("@lastname", entity.LastName);
                     command.Parameters.AddWithValue("@gender", entity.Gender.ToString());
                     command.Parameters.AddWithValue("@validity", entity.LibraryMembership.EndDateValidity);
+                    command.Parameters.AddWithValue("@role", entity.Role);
+
                     command.Prepare();
                     command.ExecuteNonQuery();
                 }
@@ -121,7 +123,7 @@ namespace LibraryManagement.Database.Repository
                     {
                         Enum.TryParse(reader.GetString(5), out Gender gender);
                         int id = reader.GetInt16(0);
-                        return new User(id, reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), gender);
+                        return new User(id, reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4), reader.GetDateTime(6), gender, reader.GetString(7));
                     }
                 }
             }

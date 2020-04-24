@@ -106,6 +106,53 @@ namespace LibraryManagement
             }
         }
 
+        static void UserMenu(User userNew, Menu menu)
+        {
+            bool cont = true;
+            while (cont)
+            {
+                int op = ShowHome();
+                
+                switch (op)
+                {
+                    case 0:
+                        cont = false;
+                        break;
+                    case 1:
+                        Console.Clear();
+                        Library.SeeBooks();
+                        menu.UpdateState(EUserOption.SeeBooks);
+                        break;
+                    case 2:
+                        Console.WriteLine("Choose the book you want");
+                        int idBook = Convert.ToInt32(Console.ReadLine());
+                        userNew.CurrentChoose.Add(Library.Books[idBook]);
+                        menu.UpdateState(EUserOption.ChooseBooks);
+                        break;
+                    case 3:
+                        Console.Clear();
+
+                        menu.UpdateState(EUserOption.BorrowBooks);
+                        break;
+                    case 4:
+                        Console.Clear();
+                        menu.UpdateState(EUserOption.ReturnBook);
+                        break;
+                    case 5:
+                        Console.Clear();
+                        userNew.BorrowedBooks.ForEach(book => Console.WriteLine(book.Value));
+                        break;
+                    case -1:
+                        break;
+
+                }
+            }
+        }
+
+        static void AdminMenu()
+        {
+
+        }
 
         static void Main(string[] args)
         {
@@ -158,46 +205,19 @@ namespace LibraryManagement
                     else
                         Console.WriteLine("Wrong username or password");
             }
-            HeadOffice headOffice = new HeadOffice("Ofiice", "Head", DateTime.Now, null, Utils.Gender.Female);
-            Librarian librarian = new Librarian("Librarian", "Last", DateTime.Now, headOffice, Utils.Gender.Female);
-            userNew.Supervisor = librarian;
-            menu.UpdateState(EUserOption.Login);
-            Console.Clear();
-            while (true)
+            if (userNew.Role.Equals("USER"))
             {
-                int op = ShowHome();
-                switch (op)
-                {
-                    case 1:
-                        Console.Clear();
-                        Library.SeeBooks();
-                        menu.UpdateState(EUserOption.SeeBooks);
-                        break;
-                    case 2:
-                        Console.WriteLine("Choose the book you want");
-                        int idBook = Convert.ToInt32(Console.ReadLine());
-                        userNew.CurrentChoose.Add(books[idBook]);
-                        menu.UpdateState(EUserOption.ChooseBooks);
-                        break;
-                    case 3:
-                        Console.Clear();
-                        
-                        menu.UpdateState(EUserOption.BorrowBooks);
-                        break;
-                    case 4:
-                        Console.Clear();
-                        menu.UpdateState(EUserOption.ReturnBook);
-                        break;
-                    case 5:
-                        Console.Clear();
-                        userNew.BorrowedBooks.ForEach(book => Console.WriteLine(book.Value));
-                        break;
-                    case -1:
-                        break;
-
-                }
+                HeadOffice headOffice = new HeadOffice("Ofiice", "Head", DateTime.Now, null, Utils.Gender.Female);
+                Librarian librarian = new Librarian("Librarian", "Last", DateTime.Now, headOffice, Utils.Gender.Female);
+                userNew.Supervisor = librarian;
+                menu.UpdateState(EUserOption.Login);
+                Console.Clear();
+                UserMenu(userNew, menu);
             }
-
+            else
+            {
+                AdminMenu();
+            }
             //HeadOffice headOffice = new HeadOffice("Ofiice", "Head", DateTime.Now, null, Utils.Gender.Female);
             //Librarian librarian = new Librarian("Librarian", "Last", DateTime.Now, headOffice, Utils.Gender.Female);
             //User user = new User("First", "Last", DateTime.Now, librarian, Utils.Gender.Male);
