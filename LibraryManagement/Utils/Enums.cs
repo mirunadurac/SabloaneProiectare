@@ -17,4 +17,32 @@ namespace LibraryManagement.Utils
         User
     }
 
+    public enum AuthenticationOption
+    {
+        Invalid,
+        Register,
+        Login
+    }
+
+    public enum AdminMenuOptions
+    {
+        Exit,     
+        SeeBooks,
+        AdBook,
+        SeeReport,
+        Invalid
+    }
+
+    public enum UserMenuOptions
+    {
+        Exit,
+        SeeBooks,
+        ChooseBook,
+        BorrowBook,
+        ReturnBook,
+        BorrowedBooks,
+        ChangePassword,
+        Invalid
+    }
+
 }

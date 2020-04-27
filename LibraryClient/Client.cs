@@ -54,7 +54,7 @@ namespace LibraryClient
             );
         }
 
-        private int ShowFirstMenu()
+        private AuthenticationOption ShowFirstMenu()
         {
             int userOption;
             Console.WriteLine("1.Register");
@@ -62,12 +62,17 @@ namespace LibraryClient
             try
             {
                 userOption = Convert.ToInt32(Console.ReadLine());
-                return userOption;
+                if (Enum.IsDefined(typeof(AuthenticationOption), userOption))
+                {
+                    return (AuthenticationOption)userOption;
+                }
+
+                return AuthenticationOption.Invalid;
             }
             catch
             {
                 Console.WriteLine("Please choose a valid option");
-                return -1;
+                return AuthenticationOption.Invalid;
             }
         }
 
@@ -109,7 +114,7 @@ namespace LibraryClient
             return user;
         }
 
-        private int ShowHome()
+        private UserMenuOptions ShowHome()
         {
             int userOption;
             Console.WriteLine("1.See Books");
@@ -122,17 +127,22 @@ namespace LibraryClient
             try
             {
                 userOption = Convert.ToInt32(Console.ReadLine());
-                return userOption;
+                if (Enum.IsDefined(typeof(UserMenuOptions), userOption))
+                {
+                    return (UserMenuOptions)userOption;
+                }
+
+                return UserMenuOptions.Invalid;
             }
             catch
             {
                 Console.WriteLine("Please choose a valid option");
-                return -1;
+                return UserMenuOptions.Invalid;
             }
         }
 
 
-        private int ShowHomeAdmin()
+        private AdminMenuOptions ShowHomeAdmin()
         {
             int userOption;
             Console.WriteLine("1.See Books");
@@ -142,12 +152,17 @@ namespace LibraryClient
             try
             {
                 userOption = Convert.ToInt32(Console.ReadLine());
-                return userOption;
+                if (Enum.IsDefined(typeof(AdminMenuOptions), userOption))
+                {
+                    return (AdminMenuOptions)userOption;
+                }
+
+                return AdminMenuOptions.Invalid;
             }
             catch
             {
                 Console.WriteLine("Please choose a valid option");
-                return -1;
+                return AdminMenuOptions.Invalid;
             }
         }
 
@@ -177,19 +192,19 @@ namespace LibraryClient
             bool cont = true;
             while (cont)
             {
-                int userOption = ShowHome();
+                var userOption = ShowHome();
 
                 switch (userOption)
                 {
-                    case 0:
+                    case UserMenuOptions.Exit:
                         cont = false;
                         break;
-                    case 1:
+                    case UserMenuOptions.SeeBooks:
                         Console.Clear();
                         Library.SeeBooks();
                         menu.UpdateState(EUserOption.SeeBooks);
                         break;
-                    case 2:
+                    case UserMenuOptions.ChooseBook:
                         Console.WriteLine("Choose the book you want");
                         byte[] msg = Encoding.ASCII.GetBytes("2");
                         int bytesSent = sender.Send(msg);
@@ -204,28 +219,29 @@ namespace LibraryClient
                         menu.UpdateState(EUserOption.ChooseBooks);
 
                         break;
-                    case 3:
+                    case UserMenuOptions.BorrowBook:
                         Console.Clear();
 
                         menu.UpdateState(EUserOption.BorrowBooks);
                         break;
-                    case 4:
+                    case UserMenuOptions.ReturnBook:
                         Console.Clear();
                         menu.UpdateState(EUserOption.ReturnBook);
                         break;
-                    case 5:
+                    case UserMenuOptions.BorrowedBooks:
                         Console.Clear();
                         userNew.BorrowedBooks.ForEach(book => Console.WriteLine(book.Value));
                         break;
-                    case 6:
+                    case UserMenuOptions.ChangePassword:
                         Console.Clear();
                         ChangePassword(userNew);
 
                         Console.Clear();
                         break;
-                    case -1:
+                    case UserMenuOptions.Invalid:
                         break;
-
+                    default:
+                        break;
                 }
             }
         }
@@ -309,21 +325,21 @@ namespace LibraryClient
             bool cont = true;
             while (cont)
             {
-                int op = ShowHomeAdmin();
+                var adminOption = ShowHomeAdmin();
 
-                switch (op)
+                switch (adminOption)
                 {
-                    case 0:
+                    case AdminMenuOptions.Exit:
                         cont = false;
                         break;
-                    case 1:
+                    case AdminMenuOptions.SeeBooks:
                         Console.Clear();
                         Library.SeeBooks();
                         break;
-                    case 2:
+                    case AdminMenuOptions.AdBook:
                         AddBook();
                         break;
-                    case 3:
+                    case AdminMenuOptions.SeeReport:
                         byte[] msg = Encoding.ASCII.GetBytes("3");
                         int bytesSent = sender.Send(msg);
                         int bytesRec = sender.Receive(bytes);
@@ -335,7 +351,6 @@ namespace LibraryClient
                         Console.WriteLine("Total borrow books:" + receivedMessage);
 
                         break;
-
 
                 }
             }
@@ -351,27 +366,30 @@ namespace LibraryClient
                 logger.Log(Status.Info, "Finished generating books");
                 //books.ForEach(book => Console.WriteLine(book));
 
-               
+
                 byte[] bytes = new byte[1024];
                 bool isActive = true;
                 while (isActive)
                 {
-                    int userOption = ShowFirstMenu();
+                    var userOption = ShowFirstMenu();
                     switch (userOption)
                     {
-                        case 1:
+                        case AuthenticationOption.Register:
                             userNew = Register();
                             break;
-                        case 2:
+                        case AuthenticationOption.Login:
                             userNew = Login();
                             break;
-                        case -1:
+                        case AuthenticationOption.Invalid:
+                            Console.WriteLine("Invalid Option");
+                            break;
+                        default:
                             break;
 
                     }
-                    if (userOption != -1)
+                    if (userOption != AuthenticationOption.Invalid)
                     {
-                        KeyValuePair<int, User> data = new KeyValuePair<int, User>(userOption, userNew);
+                        KeyValuePair<int, User> data = new KeyValuePair<int, User>((int)userOption, userNew);
                         string serializedObject = JToken.FromObject(data).ToString();
                         byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
                         int bytesSent = sender.Send(msg);
