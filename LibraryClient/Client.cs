@@ -197,7 +197,7 @@ namespace LibraryClient
                 switch (userOption)
                 {
                     case UserMenuOptions.Exit:
-                        cont = false;
+                        cont = false; 
                         break;
                     case UserMenuOptions.SeeBooks:
                         Console.Clear();
@@ -208,16 +208,28 @@ namespace LibraryClient
                         Console.WriteLine("Choose the book you want");
                         byte[] msg = Encoding.ASCII.GetBytes("2");
                         int bytesSent = sender.Send(msg);
+
                         int idBook = Convert.ToInt32(Console.ReadLine());
                         msg = Encoding.ASCII.GetBytes(idBook.ToString());
                         bytesSent = sender.Send(msg);
 
                         int bytesRec = sender.Receive(bytes);
                         string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                        Book book = JToken.Parse(receivedMessage).ToObject<Fiction>();
-                        userNew.CurrentChoose.Add(book);
-                        menu.UpdateState(EUserOption.ChooseBooks);
-
+                        Book book = null;
+                        try
+                        {
+                            if (JToken.Parse(receivedMessage).ToObject<Fiction>() != null)
+                            {
+                                book = JToken.Parse(receivedMessage).ToObject<Fiction>();
+                                userNew.CurrentChoose.Add(book);
+                                menu.UpdateState(EUserOption.ChooseBooks);
+                            }
+                        }
+                        catch(Exception)
+                        {
+                            Console.WriteLine("Book not found");
+                        }
+                                                                
                         break;
                     case UserMenuOptions.BorrowBook:
                         Console.Clear();

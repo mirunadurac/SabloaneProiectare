@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using Renci.SshNet;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -61,44 +62,51 @@ namespace LibraryServer
             return userNew;
         }
 
-        private int LookForBook(int id)
-        {
-            for (int index = 0; index < Library.Books.Count; index++)
-            {
-                if (Library.Books[index].Id == id)
-                    return index;
-            }
-            return -1;
-        }
-
         public ServerThread(DatabaseConnection databaseConnection)
         {
             this.databaseConnection = databaseConnection;
             userRepository = new UserRepository<User>(databaseConnection.Connetion);
 
         }
-        private void Command(int op)
+        private void Command(int option)
         {
             byte[] bytes = null;
 
 
             bytes = new byte[1024];
-            switch (op)
+            switch (option)
             {
 
                 case 2:
-                    int bytesRec = clientSocket.Receive(bytes);
-                    int index = LookForBook(Convert.ToInt32(bytesRec));
-                    if (index != -1)
+                    try
                     {
-                        Book book = Library.Books[index];
-                        Library.Books.RemoveAt(index);
-                        string serializedObject = JToken.FromObject(book).ToString();
+                        int bytesRec = clientSocket.Receive(bytes);
+                        var receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                        int id = Convert.ToInt32(receivedOption);
+                    
+                        var requestedBook = Library.Books.Where(book => book.Id == id).FirstOrDefault();
+
+                        string serializedObject = JToken.FromObject(requestedBook).ToString();
                         byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
-                        clientSocket.Send(msg);
-                        Report.AddNewBook(book.Type());
-                        Report.SeeReport();
+                        if (requestedBook != null)
+                        {
+                            Library.Books.Remove(requestedBook);                          
+                            clientSocket.Send(msg);
+                            Report.AddNewBook(requestedBook.Type());
+                            Report.SeeReport();
+                        }
+                        else
+                        {
+                            clientSocket.Send(Encoding.ASCII.GetBytes("Book not found"));
+                        }
+                        
                     }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("Invalid book ID");
+                        clientSocket.Send(Encoding.ASCII.GetBytes("Book not found"));
+                    }
+
                     break;
                 case 6:
                     int bytesRec2 = clientSocket.Receive(bytes);
