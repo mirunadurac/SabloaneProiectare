@@ -6,10 +6,10 @@ using System.Text;
 
 namespace LibraryManagement.ChainOfResponsability
 {
-     public class Librarian:User
+    public class Librarian : User
     {
-        public Librarian(string firstName, string lastName, DateTime dateTime, User supervisor,Gender gender):
-            base(firstName,lastName,dateTime, supervisor, gender)
+        public Librarian(string firstName, string lastName, User supervisor) :
+            base(firstName, lastName, supervisor)
         {
 
         }

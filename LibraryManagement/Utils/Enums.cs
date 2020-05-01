@@ -28,7 +28,7 @@ namespace LibraryManagement.Utils
     {
         Exit,     
         SeeBooks,
-        AdBook,
+        AddBook,
         SeeReport,
         Invalid
     }

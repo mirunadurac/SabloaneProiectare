@@ -1,31 +1,30 @@
 ﻿using LibraryManagement.ChainOfResponsability;
 using LibraryManagement.FactoryMethod;
 using LibraryManagement.Models;
+using LibraryManagement.Models.DatabaseModels;
 using LibraryManagement.Observer.Logger;
 using LibraryManagement.Observer.Logging;
-using LibraryManagement.Proxy.ChangePassword;
-using LibraryManagement.Singleton;
 using LibraryManagement.State;
 using LibraryManagement.Utils;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 
 namespace LibraryClient
 {
     public class Client
     {
-        private static Library Library = Library.Instance;
         private IPHostEntry host;
         private IPAddress ipAddress;
         private IPEndPoint remoteEP;
-        private Socket sender;
+        private Socket serverSocket;
 
         private Logger logger;
 
@@ -34,7 +33,7 @@ namespace LibraryClient
             this.host = host;
             this.ipAddress = ipAddress;
             this.remoteEP = remoteEP;
-            this.sender = sender;
+            this.serverSocket = sender;
 
             // Connect to Remote EndPoint  
             sender.Connect(remoteEP);
@@ -79,28 +78,46 @@ namespace LibraryClient
         private User Register()
         {
             Console.Write("Username: ");
-            string username = Console.ReadLine();
+            var username = Console.ReadLine();
+
             Console.Write("\nPassword: ");
-            string password = Console.ReadLine();
+            var password = Console.ReadLine();
+
             Console.Write("\nFirst Name: ");
-            string firstname = Console.ReadLine();
+            var firstname = Console.ReadLine();
+
             Console.Write("\nLast name: ");
-            string lastname = Console.ReadLine();
-            DateTime endTime = new DateTime(DateTime.Now.Year + 1, DateTime.Now.Month, DateTime.Now.Day);
+            var lastname = Console.ReadLine();
+
+            DateTime validity = new DateTime(DateTime.Now.Year + 1, DateTime.Now.Month, DateTime.Now.Day);
 
             Console.WriteLine("Gender (choose the number)");
             Console.WriteLine("1.Male");
             Console.WriteLine("2.Female");
             Console.WriteLine("3.Unknown");
 
-            int genderOption = Convert.ToInt32(Console.ReadLine());
-            Gender gender = (Gender)genderOption;
+            var genderOption = Convert.ToInt32(Console.ReadLine());
+            var gender = Gender.Unknown;
+            if (Enum.IsDefined(typeof(AdminMenuOptions), genderOption))
+            {
+                gender = (Gender)genderOption;
+            }
 
-            User user = new User(firstname, lastname, endTime, gender);
-            user.Username = username;
-            user.Password = password;
-            user.Role = Role.User;
-            return user;
+            var registeredUser = new UserDatabase
+            {
+                Username = username,
+                Password = password,
+                FirstName = firstname,
+                LastName = lastname,
+                Validity = validity,
+                Gender = gender,
+                Role = Role.User
+            };
+
+            // TO DO 
+            // - validare
+
+            return new User(registeredUser);
         }
 
         private User Login()
@@ -141,7 +158,6 @@ namespace LibraryClient
             }
         }
 
-
         private AdminMenuOptions ShowHomeAdmin()
         {
             int userOption;
@@ -168,22 +184,22 @@ namespace LibraryClient
 
         private void ChangePassword(User userNew)
         {
-            SafeUserProxy safeUserProxy = new SafeUserProxy();
-            User user = safeUserProxy.ChangePassword(userNew);
-            if (user != null)
-            {
-                byte[] msg = Encoding.ASCII.GetBytes("6");
-                int bytesSent = sender.Send(msg);
-                User user2 = new User(user.IdUser, user.Username, user.FirstName, user.LastName, user.Password);
-                string serializedObject = JToken.FromObject(user2).ToString();
-                msg = Encoding.ASCII.GetBytes(serializedObject);
-                bytesSent = sender.Send(msg);
+            //SafeUserProxy safeUserProxy = new SafeUserProxy();
+            //User user = safeUserProxy.ChangePassword(userNew);
+            //if (user != null)
+            //{
+            //    byte[] msg = Encoding.ASCII.GetBytes("6");
+            //    int bytesSent = sender.Send(msg);
+            //    User user2 = new User(user.IdUser, user.Username, user.FirstName, user.LastName, user.Password);
+            //    string serializedObject = JToken.FromObject(user2).ToString();
+            //    msg = Encoding.ASCII.GetBytes(serializedObject);
+            //    bytesSent = sender.Send(msg);
 
-            }
-            else
-            {
-                Console.WriteLine("Old password fail");
-            }
+            //}
+            //else
+            //{
+            //    Console.WriteLine("Old password fail");
+            //}
         }
 
         private void UserMenu(User userNew, Menu menu)
@@ -197,54 +213,25 @@ namespace LibraryClient
                 switch (userOption)
                 {
                     case UserMenuOptions.Exit:
-                        cont = false; 
+                        cont = false;
                         break;
                     case UserMenuOptions.SeeBooks:
-                        Console.Clear();
-                        Library.SeeBooks();
-                        menu.UpdateState(EUserOption.SeeBooks);
+                        SeeBooks(menu, bytes);
                         break;
                     case UserMenuOptions.ChooseBook:
-                        Console.WriteLine("Choose the book you want");
-                        byte[] msg = Encoding.ASCII.GetBytes("2");
-                        int bytesSent = sender.Send(msg);
-
-                        int idBook = Convert.ToInt32(Console.ReadLine());
-                        msg = Encoding.ASCII.GetBytes(idBook.ToString());
-                        bytesSent = sender.Send(msg);
-
-                        int bytesRec = sender.Receive(bytes);
-                        string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                        Book book = null;
-                        try
-                        {
-                            if (JToken.Parse(receivedMessage).ToObject<Fiction>() != null)
-                            {
-                                book = JToken.Parse(receivedMessage).ToObject<Fiction>();
-                                userNew.CurrentChoose.Add(book);
-                                menu.UpdateState(EUserOption.ChooseBooks);
-                            }
-                        }
-                        catch(Exception)
-                        {
-                            Console.WriteLine("Book not found");
-                        }
-                                                                
+                        ChooseBook(userNew, menu, bytes);
                         break;
                     case UserMenuOptions.BorrowBook:
-                        Console.Clear();
-
-                        menu.UpdateState(EUserOption.BorrowBooks);
+                        BorrowBook(menu);
                         break;
                     case UserMenuOptions.ReturnBook:
-                        Console.Clear();
-                        menu.UpdateState(EUserOption.ReturnBook);
+                        ReturnBook(userNew, menu);
                         break;
                     case UserMenuOptions.BorrowedBooks:
-                        Console.Clear();
-                        userNew.BorrowedBooks.ForEach(book => Console.WriteLine(book.Value));
+                        SeeBorrowedBooks(userNew);
                         break;
                     case UserMenuOptions.ChangePassword:
+                        // TO DO
                         Console.Clear();
                         ChangePassword(userNew);
 
@@ -258,6 +245,99 @@ namespace LibraryClient
             }
         }
 
+        private static void SeeBorrowedBooks(User userNew)
+        {
+            Console.Clear();
+            userNew.BorrowedBooks.ForEach(book => Console.WriteLine(book.Value));
+        }
+
+        private void ReturnBook(User userNew, Menu menu)
+        {
+            Console.Clear();
+            userNew.BorrowedBooks.ForEach(book => Console.WriteLine(book.Value));
+            Console.WriteLine("ID: ");
+            int id;
+            int.TryParse(Console.ReadLine(), out id);
+
+            var bookToReturn = userNew.BorrowedBooks.First(book => book.Value.Id == id);
+
+            if (bookToReturn.Value != null)
+            {
+                userNew.BorrowedBooks.Remove(bookToReturn);
+            }
+
+            byte[] option = Encoding.ASCII.GetBytes("4");
+            serverSocket.Send(option);
+
+            var dbBook = new BookDatabase
+            {
+                Author = bookToReturn.Value.Author,
+                PublicationDate = new DateTime(bookToReturn.Value.PublicationDate, 1, 1),
+                Title = bookToReturn.Value.Title,
+                Type = bookToReturn.Value.Type()
+
+            };
+
+            string serializedObject = JToken.FromObject(dbBook).ToString();
+            byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
+            serverSocket.Send(msg);
+            Console.WriteLine("Book returned");
+
+            menu.UpdateState(EUserOption.ReturnBook);
+        }
+
+        private static void BorrowBook(Menu menu)
+        {
+            Console.Clear();
+            Console.WriteLine("The choosen books are now borrowed");
+            menu.UpdateState(EUserOption.BorrowBooks);
+        }
+
+        private void ChooseBook(User userNew, Menu menu, byte[] bytes)
+        {
+            Console.WriteLine("Choose the book you want");
+            byte[] msg = Encoding.ASCII.GetBytes("2");
+            serverSocket.Send(msg);
+
+            int idBook = Convert.ToInt32(Console.ReadLine());
+            msg = Encoding.ASCII.GetBytes(idBook.ToString());
+            serverSocket.Send(msg);
+
+            int bytesRec = serverSocket.Receive(bytes);
+            string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+            try
+            {
+                if (JToken.Parse(receivedMessage).ToObject<BookDatabase>() != null)
+                {
+                    var book = JToken.Parse(receivedMessage).ToObject<BookDatabase>();
+                    userNew.CurrentChoose.Add(new Book(book));
+                    menu.UpdateState(EUserOption.ChooseBooks);
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Book not found");
+            }
+        }
+
+        private void SeeBooks(Menu menu, byte[] bytes)
+        {
+            Console.Clear();
+
+            byte[] option = Encoding.ASCII.GetBytes("1");
+            serverSocket.Send(option);
+
+            var receiverBooksBytes = serverSocket.Receive(bytes);
+            var receiverBooksString = Encoding.ASCII.GetString(bytes, 0, receiverBooksBytes);
+
+            var books = JToken.Parse(receiverBooksString).ToObject<List<BookDatabase>>();
+            foreach (var dbBook in books)
+            {
+                Console.WriteLine($"[Id: {dbBook.Id}, Title: {dbBook.Title}, Author: {dbBook.Author}, Publication Date: {dbBook.PublicationDate}");
+            }
+
+            menu.UpdateState(EUserOption.SeeBooks);
+        }
 
         private Book MakeFiction()
         {
@@ -265,12 +345,9 @@ namespace LibraryClient
             {
                 try
                 {
-                    Console.WriteLine("Title ");
-                    string title = Console.ReadLine();
-                    Console.WriteLine("Author");
-                    string author = Console.ReadLine();
-                    Console.WriteLine("Publication date (year)");
-                    int date = Convert.ToInt32(Console.ReadLine());
+                    string title, author;
+                    int date;
+                    ReadDetailsBook(out title, out author, out date);
                     FictionFactory fictionFactory = new FictionFactory();
                     return fictionFactory.GetBook(title, author, date);
                 }
@@ -281,18 +358,25 @@ namespace LibraryClient
             }
         }
 
+        private static void ReadDetailsBook(out string title, out string author, out int date)
+        {
+            Console.Write("Title: ");
+            title = Console.ReadLine();
+            Console.Write("\nAuthor: ");
+            author = Console.ReadLine();
+            Console.Write("\nPublication date (year): ");
+            date = Convert.ToInt32(Console.ReadLine());
+        }
+
         private Book MakeNonFiction()
         {
             while (true)
             {
                 try
                 {
-                    Console.WriteLine("Title ");
-                    string title = Console.ReadLine();
-                    Console.WriteLine("Author");
-                    string author = Console.ReadLine();
-                    Console.WriteLine("Publication date (year)");
-                    int date = Convert.ToInt32(Console.ReadLine());
+                    string title, author;
+                    int date;
+                    ReadDetailsBook(out title, out author, out date);
                     NonFictionFactory nonFictionFactory = new NonFictionFactory();
                     return nonFictionFactory.GetBook(title, author, date);
                 }
@@ -303,7 +387,7 @@ namespace LibraryClient
             }
         }
 
-        private void AddBook()
+        private Book CreateBook()
         {
             int op = 0;
             Console.WriteLine("Choose the type");
@@ -319,15 +403,19 @@ namespace LibraryClient
                 Console.WriteLine("Please choose a valid option");
 
             }
+
+            Book createdBook = null;
             switch (op)
             {
                 case 1:
-                    Library.Books.Add(MakeFiction());
+                    createdBook = MakeFiction();
                     break;
                 case 2:
-                    Library.Books.Add(MakeNonFiction());
+                    createdBook = MakeNonFiction();
                     break;
             }
+
+            return createdBook;
 
         }
 
@@ -346,19 +434,31 @@ namespace LibraryClient
                         break;
                     case AdminMenuOptions.SeeBooks:
                         Console.Clear();
-                        Library.SeeBooks();
+
+                        // TO DO
+
                         break;
-                    case AdminMenuOptions.AdBook:
-                        AddBook();
+                    case AdminMenuOptions.AddBook:
+                        var createdBook = CreateBook();
+                        var type = createdBook.Type();
+                        byte[] option = Encoding.ASCII.GetBytes("2");
+                        serverSocket.Send(option);
+
+                        string serializedObject = JToken.FromObject(new KeyValuePair<Book, EBookType>(createdBook, createdBook.Type())).ToString();
+                        byte[] byteBook = Encoding.ASCII.GetBytes(serializedObject);
+                        serverSocket.Send(byteBook);
+                        Console.WriteLine("Book added");
+                        Console.ReadLine();
+                        Console.Clear();
                         break;
                     case AdminMenuOptions.SeeReport:
                         byte[] msg = Encoding.ASCII.GetBytes("3");
-                        int bytesSent = sender.Send(msg);
-                        int bytesRec = sender.Receive(bytes);
+                        int bytesSent = serverSocket.Send(msg);
+                        int bytesRec = serverSocket.Receive(bytes);
                         string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec);
 
                         Console.WriteLine("Report: \n" + receivedMessage);
-                        bytesRec = sender.Receive(bytes);
+                        bytesRec = serverSocket.Receive(bytes);
                         receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec);
                         Console.WriteLine("Total borrow books:" + receivedMessage);
 
@@ -401,11 +501,11 @@ namespace LibraryClient
                     }
                     if (userOption != AuthenticationOption.Invalid)
                     {
-                        KeyValuePair<int, User> data = new KeyValuePair<int, User>((int)userOption, userNew);
+                        var data = new KeyValuePair<int, User>((int)userOption, userNew);
                         string serializedObject = JToken.FromObject(data).ToString();
                         byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
-                        int bytesSent = sender.Send(msg);
-                        int bytesRec = sender.Receive(bytes);
+                        int bytesSent = serverSocket.Send(msg);
+                        int bytesRec = serverSocket.Receive(bytes);
                         string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec);
                         try
                         {
@@ -425,8 +525,8 @@ namespace LibraryClient
 
                 if (userNew.Role == Role.User)
                 {
-                    HeadOffice headOffice = new HeadOffice("Ofiice", "Head", DateTime.Now, null, Gender.Female);
-                    Librarian librarian = new Librarian("Librarian", "Last", DateTime.Now, headOffice, Gender.Female);
+                    HeadOffice headOffice = new HeadOffice("Ofiice", "Head", null);
+                    Librarian librarian = new Librarian("Librarian", "Last", headOffice);
                     userNew.Supervisor = librarian;
                     Console.Clear();
                     menu.UpdateState(EUserOption.Login);
@@ -439,8 +539,8 @@ namespace LibraryClient
                 }
 
                 // Release the socket.    
-                sender.Shutdown(SocketShutdown.Both);
-                sender.Close();
+                serverSocket.Shutdown(SocketShutdown.Both);
+                serverSocket.Close();
 
             }
             catch (Exception e)

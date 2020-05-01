@@ -1,13 +1,11 @@
-﻿using LibraryManagement.Database;
-using LibraryManagement.Database.Repository;
-using LibraryManagement.FactoryMethod;
+﻿using LibraryManagement.FactoryMethod;
 using LibraryManagement.Flyweight;
 using LibraryManagement.Models;
+using LibraryManagement.Models.DatabaseModels;
+using LibraryManagement.Repository;
 using LibraryManagement.Singleton;
-using LibraryManagement.State;
 using LibraryManagement.Utils;
 using Newtonsoft.Json.Linq;
-using Renci.SshNet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,11 +18,7 @@ namespace LibraryServer
     public class ServerThread
     {
         private Socket clientSocket;
-
-        private Library Library = Library.Instance;
-        private List<User> users = new List<User>();
-        private DatabaseConnection databaseConnection;
-        private UserRepository<User> userRepository;
+        private UnitOfWork unitOfWork;
 
         static Report Report { get; set; } = new Report();
         public void StartServerThread(Socket inClientSocket)
@@ -33,100 +27,177 @@ namespace LibraryServer
             Thread ctThread = new Thread(Execute);
             ctThread.Start();
         }
-
-        static User Login(UserRepository<User> userRepository, User user)
+        private User Login(User user)
         {
-            User userCheck = userRepository.FindByUsername(user.Username);
+            var userCheck = unitOfWork.UserRepository.DbSet.FirstOrDefault(u => u.Username.Equals(user.Username) && u.Password.Equals(user.Password));
             if (userCheck != null)
-                if (userCheck.Password.Equals(user.Password))
-                    return userCheck;
+            {
+                return new User(userCheck);
+            }
             return null;
         }
 
-        private User LoginRegister(KeyValuePair<int, User> pair, UserRepository<User> userRepository)
+        private User LoginRegister(KeyValuePair<int, User> pair)
         {
-            int option = pair.Key;
-            User userNew = pair.Value;
+            var option = (AuthenticationOption)pair.Key;
+            var newUser = pair.Value;
             switch (option)
             {
-                case 1:
-                    userRepository.Add(userNew);
+                //register
+                case AuthenticationOption.Register:
+                    var databaseUser = new UserDatabase
+                    {
+                        Username = newUser.Username,
+                        Password = newUser.Password,
+                        FirstName = newUser.FirstName,
+                        LastName = newUser.LastName,
+                        Validity = newUser.LibraryMembership.EndDateValidity,
+                        Gender = newUser.Gender,
+                        Role = Role.User
+                    };
+                    unitOfWork.UserRepository.Insert(databaseUser);
+                    unitOfWork.Save();
 
                     break;
-                case 2:
-                    userNew = Login(userRepository, userNew);
+                //login
+                case AuthenticationOption.Login:
+                    newUser = Login(newUser);
 
                     break;
             }
 
-            return userNew;
+            return newUser;
         }
 
-        public ServerThread(DatabaseConnection databaseConnection)
+        public ServerThread()
         {
-            this.databaseConnection = databaseConnection;
-            userRepository = new UserRepository<User>(databaseConnection.Connetion);
+            unitOfWork = new UnitOfWork();
 
         }
-        private void Command(int option)
+
+        private void CommandUser(int option)
         {
             byte[] bytes = null;
 
 
             bytes = new byte[1024];
-            switch (option)
+
+            var enumOption = (UserMenuOptions)option;
+            switch (enumOption)
             {
-
-                case 2:
-                    try
-                    {
-                        int bytesRec = clientSocket.Receive(bytes);
-                        var receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                        int id = Convert.ToInt32(receivedOption);
-                    
-                        var requestedBook = Library.Books.Where(book => book.Id == id).FirstOrDefault();
-
-                        string serializedObject = JToken.FromObject(requestedBook).ToString();
-                        byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
-                        if (requestedBook != null)
-                        {
-                            Library.Books.Remove(requestedBook);                          
-                            clientSocket.Send(msg);
-                            Report.AddNewBook(requestedBook.Type());
-                            Report.SeeReport();
-                        }
-                        else
-                        {
-                            clientSocket.Send(Encoding.ASCII.GetBytes("Book not found"));
-                        }
-                        
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("Invalid book ID");
-                        clientSocket.Send(Encoding.ASCII.GetBytes("Book not found"));
-                    }
+                case UserMenuOptions.SeeBooks:
+                    SeeBooks();
+                    break;
+                case UserMenuOptions.ChooseBook:
+                    ChooseBook(bytes);
+                    break;
+                case UserMenuOptions.ReturnBook:
+                    ReturnBook();
 
                     break;
-                case 6:
-                    int bytesRec2 = clientSocket.Receive(bytes);
-                    string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec2);
-                    var user = JToken.Parse(receivedMessage).ToObject<User>();
-                    userRepository.Update(user);
+                case UserMenuOptions.ChangePassword:
+                    //int bytesRec2 = clientSocket.Receive(bytes);
+                    //string receivedMessage = Encoding.ASCII.GetString(bytes, 0, bytesRec2);
+                    //var user = JToken.Parse(receivedMessage).ToObject<User>();
+                    ////userRepository.Update(user);
                     break;
             }
+        }
+
+        private void ReturnBook()
+        {
+            var bookBytes = new byte[1024];
+            int bytesRec = clientSocket.Receive(bookBytes);
+
+            string receivedMessage = Encoding.ASCII.GetString(bookBytes, 0, bytesRec);
+            var bookToAdd = JToken.Parse(receivedMessage).ToObject<BookDatabase>();
+
+            unitOfWork.BookRepository.Insert(bookToAdd);
+            unitOfWork.Save();
+        }
+
+        private void ChooseBook(byte[] bytes)
+        {
+            try
+            {
+                int bytesRec = clientSocket.Receive(bytes);
+                var receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                int id = Convert.ToInt32(receivedOption);
+
+                var requestedBook = unitOfWork.BookRepository.GetById(id);
+
+                string serializedObject = JToken.FromObject(requestedBook).ToString();
+                byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
+                if (requestedBook != null)
+                {
+                    clientSocket.Send(msg);
+                    unitOfWork.BookRepository.Delete(requestedBook);
+                    unitOfWork.Save();
+                    Report.AddNewBook(requestedBook.Type);
+                    Report.SeeReport();
+                }
+                else
+                {
+                    clientSocket.Send(Encoding.ASCII.GetBytes("Book not found"));
+                }
+
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Invalid book ID");
+                clientSocket.Send(Encoding.ASCII.GetBytes("Book not found"));
+            }
+        }
+
+        private void SeeBooks()
+        {
+            List<BookDatabase> books = unitOfWork.BookRepository.DbSet.ToList();
+            var serializedBooks = JToken.FromObject(books).ToString();
+            byte[] serializedBooksByte = Encoding.ASCII.GetBytes(serializedBooks);
+            int bytesSent = clientSocket.Send(serializedBooksByte);
         }
 
         private void CommandAdmin(int op)
         {
-            byte[] bytes = null;
-            bytes = new byte[1024];
-            //string serializedObject = JToken.FromObject(Report).ToString();
-            byte[] msg = Encoding.ASCII.GetBytes(Report.SeeReport());
-            clientSocket.Send(msg);
-            msg = Encoding.ASCII.GetBytes(Report.TotalBorrowBook());
-            clientSocket.Send(msg);
-            Report.SeeReport();
+            var option = (AdminMenuOptions)op;
+            switch (option)
+            {
+                case AdminMenuOptions.SeeBooks:
+                    break;
+
+                case AdminMenuOptions.AddBook:
+                    var bookBytes = new byte[1024];
+                    int bytesRec = clientSocket.Receive(bookBytes);
+
+                    string receivedMessage = Encoding.ASCII.GetString(bookBytes, 0, bytesRec);
+                    var pair = JToken.Parse(receivedMessage).ToObject<KeyValuePair<Book, EBookType>>();
+                    var book = pair.Key;
+                    var dbBook = new BookDatabase
+                    {
+                        Author = book.Author,
+                        PublicationDate = new DateTime(book.PublicationDate, 1, 1),
+                        Title = book.Title,
+                        Type = pair.Value
+
+                    };
+
+                    unitOfWork.BookRepository.Insert(dbBook);
+                    unitOfWork.Save();
+
+                    break;
+                case AdminMenuOptions.SeeReport:
+                    byte[] bytes = null;
+                    bytes = new byte[1024];
+                    string serializedObject = JToken.FromObject(Report).ToString();
+                    byte[] msg = Encoding.ASCII.GetBytes(Report.SeeReport());
+                    clientSocket.Send(msg);
+                    msg = Encoding.ASCII.GetBytes(Report.TotalBorrowBook());
+                    clientSocket.Send(msg);
+                    Report.SeeReport();
+                    break;
+                default:
+                    break;
+            }
 
         }
         private void Execute()
@@ -143,15 +214,13 @@ namespace LibraryServer
                     receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
 
                     var userToVerify = JToken.Parse(receivedOption).ToObject<KeyValuePair<int, User>>();
-                    Console.WriteLine("User to verify: ", userToVerify);
-                    currentUser = LoginRegister(userToVerify, userRepository);
+                    Console.WriteLine("User to verify: ", userToVerify.Value);
+                    currentUser = LoginRegister(userToVerify);
                     if (currentUser != null)
                     {
                         string serializedObject = JToken.FromObject(currentUser).ToString();
                         byte[] msg = Encoding.ASCII.GetBytes(serializedObject);
                         clientSocket.Send(msg);
-                        users.Add(currentUser);
-                        Console.WriteLine(users.Count);
                         break;
                     }
                     else
@@ -169,7 +238,7 @@ namespace LibraryServer
                         int bytesRec = clientSocket.Receive(bytes);
                         receivedOption = Encoding.ASCII.GetString(bytes, 0, bytesRec);
                         int userOption = Convert.ToInt32(receivedOption);
-                        Command(userOption);
+                        CommandUser(userOption);
 
                     }
                 }

@@ -5,54 +5,55 @@ using System.Collections.Generic;
 using System.Text;
 using LibraryManagement.Utils;
 using System.Dynamic;
+using LibraryManagement.Models.DatabaseModels;
 
 namespace LibraryManagement.Models
 {
-     public class User
+    public class User
     {
-        protected static int Id { get; set; } = 0;
         public int IdUser { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public Gender Gender { get; set; }
-        public List<KeyValuePair<DateTime,Book>> BorrowedBooks { get; set; }
+        public List<KeyValuePair<DateTime, Book>> BorrowedBooks { get; set; }
         public List<Book> CurrentChoose { get; set; } = new List<Book>();
         public LibraryMembership LibraryMembership { get; set; }
         public Role Role { get; set; }
 
         public User Supervisor { get; set; }
 
-        public User(string firstName, string lastName, DateTime dateTime, User supervisor, Gender gender)
+        public User(UserDatabase userDatabase, User supervisor = null)
         {
-            FirstName = firstName;
-            LastName = lastName;
-            IdUser = ++Id;
+            FirstName = userDatabase.FirstName;
+            LastName = userDatabase.LastName;
+            LastName = userDatabase.LastName;
+            Username = userDatabase.Username;
+            Password = userDatabase.Password;
+            IdUser = userDatabase.Id;
+            Role = userDatabase.Role;
             BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
-            LibraryMembership = new LibraryMembership(dateTime);
+            LibraryMembership = new LibraryMembership(userDatabase.Validity);
+            PopulateBooks(userDatabase.Books);
             Supervisor = supervisor;
-            Gender = gender;
+            Gender = userDatabase.Gender;
         }
 
-        public User(int id, string username, string firstName, string lastName, string password)
+        private void PopulateBooks(ICollection<BookDatabase> books)
+        {
+            foreach(var dbBook in books)
+            {
+                BorrowedBooks.Add(new KeyValuePair<DateTime, Book>(DateTime.Now, new Book(dbBook)));
+            }
+        }
+
+        public User(string firstName, string lastName, User supervisor = null)
         {
             FirstName = firstName;
             LastName = lastName;
-            IdUser = id;
-            Password = password;
-            Username = username;
-
-        }
-
-        public User(string firstName, string lastName, DateTime dateTime, Gender gender)
-        {
-            FirstName = firstName;
-            LastName = lastName;
-            IdUser = ++Id;
+            Supervisor = supervisor;
             BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
-            LibraryMembership = new LibraryMembership(dateTime);
-            Gender = gender;
         }
 
         public User()
@@ -60,25 +61,13 @@ namespace LibraryManagement.Models
             BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
         }
 
-        public User(int id,string username, string password,string firstName, string lastName, DateTime dateTime, Gender gender, Role role)
-        {
-            Username = username;
-            Password = password;
-            FirstName = firstName;
-            LastName = lastName;
-            IdUser = id;
-            BorrowedBooks = new List<KeyValuePair<DateTime, Book>>();
-            LibraryMembership = new LibraryMembership(dateTime);
-            Gender = gender;
-            Role = role;
-        }
 
         public void ApplyRequest(BorrowRequest request)
         {
             if (ApproveRequest(request))
             {
-                Console.WriteLine(request.RequestNumber + " approved by " + Supervisor.ToString()+ " for " + request.GetNumberOfDays() + "days");
-                BorrowedBooks.Add(new KeyValuePair<DateTime,Book> (request.EndDay, request.BorrowedBook));
+                Console.WriteLine(request.RequestNumber + " approved by " + Supervisor.ToString() + " for " + request.GetNumberOfDays() + "days");
+                BorrowedBooks.Add(new KeyValuePair<DateTime, Book>(request.EndDay, request.BorrowedBook));
             }
             else
             {
@@ -101,7 +90,7 @@ namespace LibraryManagement.Models
         public bool ApproveRequest(BorrowRequest request)
         {
 
-            if (request.GetNumberOfDays() <=Supervisor.GetMaxDayCanAprove())
+            if (request.GetNumberOfDays() <= Supervisor.GetMaxDayCanAprove())
                 return true;
             else
                 return false;

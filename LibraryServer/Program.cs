@@ -1,5 +1,4 @@
-﻿using LibraryManagement.Database;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,15 +8,11 @@ namespace LibraryServer
     class Program
     {
         static void Main(string[] args)
-        {
-            var databaseConnection = DatabaseConnection.Instance;
-            databaseConnection.OpenConnection();
-
-             StartServer(databaseConnection);
-
+        {         
+            StartServer();
         }
 
-        public static void StartServer(DatabaseConnection  databaseConnection)
+        public static void StartServer()
         {
             IPHostEntry host = Dns.GetHostEntry("localhost");
             IPAddress ipAddress = host.AddressList[0];
@@ -26,40 +21,37 @@ namespace LibraryServer
             try
             {
                 Socket handler = null;
-                Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);             
+                Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 listener.Bind(localEndPoint);
 
                 try
                 {
-                   
-                    // Specify how many requests a Socket can listen before it gives Server busy response.  
-                    // We will listen 10 requests at a time  
                     listener.Listen(10);
 
                     Console.WriteLine("Waiting for a connection...");
                     while (true)
                     {
                         handler = listener.Accept();
-                        ServerThread server = new ServerThread(databaseConnection);
+                        ServerThread server = new ServerThread();
                         server.StartServerThread(handler);
-                       
+
                     }
 
-                    
+
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.ToString());
                 }
-                finally 
+                finally
                 {
                     handler.Shutdown(SocketShutdown.Both);
                     handler.Close();
                 }
 
             }
-            catch(Exception e)
-                {
+            catch (Exception e)
+            {
                 Console.WriteLine(e.ToString());
             }
 

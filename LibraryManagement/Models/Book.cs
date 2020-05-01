@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 using LibraryManagement.FactoryMethod;
+using LibraryManagement.Models.DatabaseModels;
 
 namespace LibraryManagement.Models
 {
-    public abstract class Book
+    public class Book
     {
         public int Id { get; set; }
         public string Title { get; set; }
@@ -14,20 +15,28 @@ namespace LibraryManagement.Models
 
         public EBookType EBookType { get; set; }
 
-        public Book(int id, string title, string author, int publicationdDate)
-        {
-            Id = id;
-            Title = title;
-            Author = author;
-            PublicationDate = publicationdDate;
-        }
-
         public Book(string title, string author, int publicationdDate)
         {
             Title = title;
             Author = author;
             PublicationDate = publicationdDate;
+        }
 
+        public Book(BookDatabase bookDatabase)
+        {
+            Id = bookDatabase.Id;
+            Title = bookDatabase.Title; ;
+            Author = bookDatabase.Author;
+            PublicationDate = bookDatabase.PublicationDate.Year;
+
+        }
+
+        public Book(int id, string title, string author, int publicationDate)
+        {
+            Id = id;
+            Title = title;
+            Author = author;
+            PublicationDate = publicationDate;
         }
 
         public Book() { }
@@ -37,6 +46,9 @@ namespace LibraryManagement.Models
             return $"[Id: {Id}, Title: {Title}, Author: {Author}, Publication Date: {PublicationDate}]";
         }
 
-        public abstract EBookType Type();
+        public virtual EBookType Type()
+        {
+            return EBookType;
+        }
     }
 }
